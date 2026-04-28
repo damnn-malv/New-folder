@@ -18,8 +18,8 @@ const NAV_ITEMS = [
   { to: "/Dispatch", label: "Dispatch", Icon: DispatchIcon },
   { to: "/Ticket", label: "Tickets", Icon: TicketIcon },
   { to: "/Collections", label: "Collections", Icon: CollectionsIcon },
-  { to: "/Vehicles", label: "Vehicles", Icon: VehicleIcon },
-  { to: "/Drivers", label: "Drivers", Icon: DriverIcon },
+  { to: "/Vehicles", label: "Vehicles Registry", Icon: VehicleIcon },
+  { to: "/Drivers", label: "Drivers Registry", Icon: DriverIcon },
   { to: "/StaffRegistry", label: "Staff Registry", Icon: UserIcon },
   { to: "/Reports", label: "Reports", Icon: ReportIcon },
 ];

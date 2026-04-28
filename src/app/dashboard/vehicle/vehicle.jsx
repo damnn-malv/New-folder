@@ -364,10 +364,10 @@ function Vehicle() {
                 className="text-2xl font-bold"
                 style={{ color: "#1a2744", fontFamily: "'Source Serif 4', Georgia, serif" }}
               >
-                Fleet Vehicle Registry
+              Vehicle Registry
               </h1>
               <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">
-                Manage registered fleet vehicles and driver assignments
+                Manage registered vehicles and driver assignments
               </p>
             </div>
           </div>
