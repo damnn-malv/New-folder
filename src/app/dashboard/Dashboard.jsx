@@ -99,72 +99,9 @@ function Dashboard() {
         ))}
       </div>
 
-      {/* Dispatch Queue + On Trip */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Active Dispatch Queue */}
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b-2 border-gray-100 flex items-center gap-2" style={{ borderLeftWidth: "4px", borderLeftColor: "#1a2744" }}>
-            <h2 className="font-semibold text-gray-800" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>Active Dispatch Queue</h2>
-          </div>
-          <div className="overflow-y-auto max-h-80">
-            {stats.activeDispatch.length > 0 ? (
-              <div className="divide-y divide-gray-100">
-                {stats.activeDispatch.map((ticket) => (
-                  <div key={ticket.id} className="p-4 hover:bg-gray-50 transition">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="text-xs font-bold text-gray-700">{ticket.id}</p>
-                        <p className="text-xs text-gray-500">{ticket.route}</p>
-                      </div>
-                      <span className="px-2 py-0.5 text-xs font-semibold rounded" style={{ background: "#fef3c7", color: "#92400e" }}>ISSUED</span>
-                    </div>
-                    <button onClick={() => handleDispatch(ticket)} className="w-full px-3 py-1.5 text-xs font-semibold text-white rounded transition" style={{ background: "#1a2744" }}>
-                      Dispatch
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-400 text-sm">No active dispatch queue</div>
-            )}
-          </div>
-        </div>
-
-        {/* Active On Trip */}
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b-2 border-gray-100" style={{ borderLeftWidth: "4px", borderLeftColor: "#c9a84c" }}>
-            <h2 className="font-semibold text-gray-800" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>Active On Trip</h2>
-          </div>
-          <div className="overflow-y-auto max-h-80">
-            {stats.activeOnTrip.length > 0 ? (
-              <div className="divide-y divide-gray-100">
-                {stats.activeOnTrip.map((ticket) => (
-                  <div key={ticket.id} className="p-4 hover:bg-gray-50 transition">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="text-xs font-bold text-gray-700">{ticket.id}</p>
-                        <p className="text-xs text-gray-500">{ticket.route}</p>
-                      </div>
-                      <span className="px-2 py-0.5 text-xs font-semibold rounded" style={{ background: "#dbeafe", color: "#1e40af" }}>DISPATCHED</span>
-                    </div>
-                    <button onClick={() => handleReturn(ticket)} className="w-full px-3 py-1.5 text-xs font-semibold text-white rounded transition" style={{ background: "#2a5c3f" }}>
-                      Mark as Returned
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-400 text-sm">No active trips</div>
-            )}
-          </div>
-        </div>
+      
       </div>
 
-      {showBatchModal && selectedTicket && (
-        <BatchModal ticket={selectedTicket} onBatchSelect={handleBatchSelect}
-          onClose={() => { setShowBatchModal(false); setSelectedTicket(null); }} />
-      )}
-    </div>
   );
 }
 
