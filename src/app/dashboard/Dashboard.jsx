@@ -36,9 +36,9 @@ function Dashboard() {
       ]);
       const today = new Date().toISOString().split("T")[0];
       setStats({
-        activeDispatch: tickets.filter((t) => t.status === "ISSUED").slice(0, 5),
-        activeOnTrip: tickets.filter((t) => t.status === "DISPATCHED").slice(0, 5),
-        ticketsToday: tickets.filter((t) => t.issued_at.split("T")[0] === today && t.status !== "CANCELLED").slice(0, 10),
+        activeDispatch: tickets.filter((t) => t.status === "ISSUED").slice(0, 100),
+        activeOnTrip: tickets.filter((t) => t.status === "DISPATCHED").slice(0, 100),
+        ticketsToday: tickets.filter((t) => t.issued_at.split("T")[0] === today && t.status !== "CANCELLED").slice(0, 100),
         availableJeeps: vehicles.filter((v) => v.status === "AVAILABLE"),
         driversOnDuty: drivers.filter((d) => d.status === "ACTIVE"),
       });
