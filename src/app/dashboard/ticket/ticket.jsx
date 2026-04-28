@@ -1,193 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { OperationsService } from "../../../lib/operations-service";
-import { TICKET_FEE, SHIFTS } from "../../../lib/constants";
-import { apiService } from "../../../lib/api-service";
+import React from "react";
+import { useTicket, statusColor, formatTime } from "../../../lib/useTicket";
 
-const statusColor = {
-  ISSUED: "bg-yellow-100 text-yellow-800",
-  DISPATCHED: "bg-blue-100 text-blue-800",
-  COLLECTED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
-};
-
-function ticket() {
-  const [tickets, setTickets] = useState([]);
-  const [filteredTickets, setFilteredTickets] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [vehicles, setVehicles] = useState([]);
-  const [drivers, setDrivers] = useState([]);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [selectedDriver, setSelectedDriver] = useState(null);
-  const [showDriverModal, setShowDriverModal] = useState(false);
-  const [issuingTicket, setIssuingTicket] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [issueError, setIssueError] = useState("");
-  const [missedBatchWarning, setMissedBatchWarning] = useState("");
-  const [overrideMissedBatch, setOverrideMissedBatch] = useState(false);
-
-  useEffect(() => { fetchTickets(); fetchVehicles(); fetchDrivers(); }, []);
-
-  useEffect(() => {
-    const filtered = tickets.filter(
-      (t) =>
-        t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.vehicle?.plate_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.driver?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const sorted = filtered.sort((a, b) => 
-      new Date(b.issued_at) - new Date(a.issued_at)
-    );
-    setFilteredTickets(filtered.slice(0, 10));
-  }, [searchTerm, tickets]);
-
-  const fetchTickets = async () => {
-    try {
-      setLoading(true);
-      setTickets(await apiService.getTickets());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
-
-  const fetchVehicles = async () => {
-    try { setVehicles(await apiService.getVehicles()); } catch { /* silent */ }
-  };
-
-  const fetchDrivers = async () => {
-    try { setDrivers(await apiService.getDrivers()); } catch { /* silent */ }
-  };
-
-  const handleVehicleChange = (e) => {
-    const vehicleId = parseInt(e.target.value);
-    const vehicle = vehicles.find((v) => v.id === vehicleId);
-    setSelectedVehicle(vehicle || null);
-    setMissedBatchWarning("");
-    setOverrideMissedBatch(false);
-    setIssueError("");
-    if (vehicle?.active_driver) {
-      setSelectedDriver(drivers.find((d) => d.id === vehicle.active_driver) || null);
-    } else {
-      setSelectedDriver(null);
-    }
-  };
-
-  const handleDriverChange = (driverId) => {
-    setSelectedDriver(drivers.find((d) => d.id === driverId) || null);
-    setShowDriverModal(false);
-  };
-
-  // Returns the current batch ("Batch 1" | "Batch 2" | null)
-  const getCurrentBatch = () => {
-    const hour = new Date().getHours();
-    if (hour >= SHIFTS.BATCH_1.startHour && hour < SHIFTS.BATCH_1.endHour) return SHIFTS.BATCH_1.name;
-    if (hour >= SHIFTS.BATCH_2.startHour && hour < SHIFTS.BATCH_2.endHour) return SHIFTS.BATCH_2.name;
-    return null;
-  };
-
-  // Returns true if this vehicle already has a non-cancelled ticket in Batch 1 today
-  const hadBatch1TicketToday = (vehicleId) => {
-    const todayStr = new Date().toISOString().split("T")[0];
-    return tickets.some((t) => {
-      if (t.vehicle?.id !== vehicleId) return false;
-      if (t.status === "CANCELLED") return false;
-      const ticketDate = t.issued_at?.split("T")[0];
-      return ticketDate === todayStr && OperationsService.getShiftBatchName(t.issued_at) === SHIFTS.BATCH_1.name;
-    });
-  };
-
-  const handleIssueTicket = async () => {
-    setSuccessMessage("");
-    setIssueError("");
-    setMissedBatchWarning("");
-
-    if (!selectedVehicle) { setIssueError("Please select a vehicle."); return; }
-    if (!selectedDriver) { setIssueError("Please select a driver."); return; }
-
-    // ── Batch window check ───────────────────────────────────────────────────
-    const currentBatch = getCurrentBatch();
-    if (!currentBatch) {
-      const hour = new Date().getHours();
-      const tooEarly = hour < SHIFTS.BATCH_1.startHour;
-      setIssueError(
-        tooEarly
-          ? `Ticket issuance hasn't opened yet. Batch 1 starts at ${SHIFTS.BATCH_1.startHour}:00 AM.`
-          : `Ticket issuance is closed. Operations end at ${SHIFTS.BATCH_2.endHour}:00 PM.`
-      );
-      return;
-    }
-
-    // ── Missed Batch 1 check ─────────────────────────────────────────────────
-    // If we're now in Batch 2 and this vehicle had NO Batch 1 ticket today,
-    // show a soft warning. The operator can still proceed — checkbox is optional.
-    if (currentBatch === SHIFTS.BATCH_2.name && !hadBatch1TicketToday(selectedVehicle.id)) {
-      if (!missedBatchWarning) {
-        // First attempt — surface the warning but don't block
-        setMissedBatchWarning(
-          
-          `Check the box below if this is a late issuance so it is recorded under Batch 1.`
-        );
-        return;
-      }
-      // Second attempt (warning already shown) — proceed regardless of checkbox
-    }
-
-    // Vehicle must be AVAILABLE, not ON_TRIP or MAINTENANCE
-    if (selectedVehicle.status !== "AVAILABLE") {
-      setIssueError(`Vehicle is currently ${selectedVehicle.status} and cannot be ticketed.`); return;
-    }
-    // Driver must be ACTIVE
-    if (selectedDriver.status !== "ACTIVE") {
-      setIssueError("Selected driver is not active and cannot be assigned."); return;
-    }
-    if (OperationsService.isVehicleBusy(selectedVehicle.id, tickets)) {
-      setIssueError("This vehicle already has an active ticket."); return;
-    }
-    if (OperationsService.isDriverBusy(selectedDriver.id, tickets, vehicles)) {
-      setIssueError("This driver is already assigned to an active ticket."); return;
-    }
-    try {
-      setIssuingTicket(true);
-      const now = new Date();
-      const ticketId = `TICKET-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
-      const isLate = overrideMissedBatch;
-      const newTicket = await apiService.createTicket({
-        id: ticketId,
-        vehicle_id: selectedVehicle.id,
-        driver_id: selectedDriver.id,
-        route: selectedVehicle.route_detail?.full_name || "",
-        status: "ISSUED",
-        collection_amount: TICKET_FEE,
-        is_verified: false,
-        is_late: isLate,
-        intended_batch: isLate ? SHIFTS.BATCH_1.name : "",
-      });
-      setSuccessMessage(`Ticket ${newTicket.id} issued successfully.`);
-      fetchTickets();
-      setSelectedVehicle(null);
-      setSelectedDriver(null);
-      setShowDriverModal(false);
-      setOverrideMissedBatch(false);
-      setMissedBatchWarning("");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
-      setIssueError(err.message || "Error issuing ticket");
-    } finally { setIssuingTicket(false); }
-  };
-
-  const formatTime = (dateString) => {
-    try { return new Date(dateString).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }); }
-    catch { return "N/A"; }
-  };
-
-  // Only show AVAILABLE vehicles for ticketing (exclude busy vehicles)
-  const availableVehicles = vehicles.filter(
-    (v) => v.status === "AVAILABLE" && !OperationsService.isVehicleBusy(v.id, tickets)
-  );
-  // Only show ACTIVE drivers (exclude busy drivers)
-  const activeDrivers = drivers.filter(
-    (d) => d.status === "ACTIVE" && !OperationsService.isDriverBusy(d.id, tickets, vehicles)
-  );
+function Ticket() {
+  const {
+    filteredTickets,
+    searchTerm,
+    setSearchTerm,
+    loading,
+    error,
+    vehicles,
+    selectedVehicle,
+    selectedDriver,
+    showDriverModal,
+    setShowDriverModal,
+    issuingTicket,
+    successMessage,
+    issueError,
+    missedBatchWarning,
+    overrideMissedBatch,
+    setOverrideMissedBatch,
+    availableVehicles,
+    activeDrivers,
+    handleVehicleChange,
+    handleDriverChange,
+    handleIssueTicket,
+  } = useTicket();
 
   return (
     <div className="p-6 space-y-6">
@@ -380,4 +217,4 @@ function ticket() {
   );
 }
 
-export default ticket;
+export default Ticket;

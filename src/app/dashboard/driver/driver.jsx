@@ -1,103 +1,22 @@
-import React, { useState, useEffect } from "react";
-
-const API_BASE = "http://127.0.0.1:8000/api";
-
-const EMPTY_FORM = { name: "", contact: "", status: "ACTIVE" };
-
-// Field defined OUTSIDE component to prevent remount (fixes input deselect bug)
-const Field = ({ label, children }) => (
-  <div>
-    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "#1a2744" }}>{label}</label>
-    {children}
-  </div>
-);
-
-const inputCls = "w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:ring-2";
+import React from "react";
+import { useDriver, Field, inputCls } from "../../../lib/useDriver";
 
 function Driver() {
-  const [drivers, setDrivers] = useState([]);
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editing, setEditing] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-
-  useEffect(() => { fetchDrivers(); fetchTickets(); }, []);
-
-  const fetchDrivers = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/drivers/`);
-      if (!res.ok) throw new Error("Failed to fetch drivers");
-      setDrivers(await res.json());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
-  };
-
-  const fetchTickets = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/tickets/`);
-      if (!res.ok) return;
-      setTickets(await res.json());
-    } catch { /* non-critical */ }
-  };
-
-  // Check if driver has an active (ISSUED or DISPATCHED) ticket
-  const isDriverOnActiveTicket = (driverId) =>
-    tickets.some((t) => t.driver?.id === driverId && (t.status === "ISSUED" || t.status === "DISPATCHED"));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Guard: cannot set INACTIVE if driver has an active ticket
-    if (editing && form.status === "INACTIVE" && isDriverOnActiveTicket(editing.id)) {
-      setError("Cannot set driver to Inactive — this driver has an active ticket. Resolve the ticket first.");
-      return;
-    }
-    try {
-      const method = editing ? "PUT" : "POST";
-      const url = editing ? `${API_BASE}/drivers/${editing.id}/` : `${API_BASE}/drivers/`;
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error("Failed to save driver");
-      fetchDrivers();
-      closeModal();
-    } catch (err) { setError(err.message); }
-  };
-
-  const handleEdit = (driver) => {
-    setEditing(driver);
-    setForm({ ...driver });
-    setIsModalOpen(true);
-  };
-
-  const handleAdd = () => {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setError(null);
-  };
-
-  const handleDelete = async (id) => {
-    if (isDriverOnActiveTicket(id)) {
-      alert("Cannot delete this driver — they have an active ticket. Resolve the ticket first.");
-      return;
-    }
-    if (!confirm("Are you sure you want to remove this driver record?")) return;
-    try {
-      const res = await fetch(`${API_BASE}/drivers/${id}/`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete driver");
-      fetchDrivers();
-    } catch (err) { setError(err.message); }
-  };
+  const {
+    drivers,
+    loading,
+    error,
+    editing,
+    isModalOpen,
+    form,
+    setForm,
+    isDriverOnActiveTicket,
+    handleSubmit,
+    handleEdit,
+    handleAdd,
+    closeModal,
+    handleDelete,
+  } = useDriver();
 
   return (
     <div className="p-6 space-y-6">

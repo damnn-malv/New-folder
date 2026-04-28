@@ -113,6 +113,18 @@ export const apiService = {
     return this.get("/drivers/");
   },
 
+  createDriver(data) {
+    return this.post("/drivers/", data);
+  },
+
+  updateDriver(id, data) {
+    return this.put(`/drivers/${id}/`, data);
+  },
+
+  deleteDriver(id) {
+    return this.delete(`/drivers/${id}/`);
+  },
+
   getUser() {
     return this.get("/user/");
   },
