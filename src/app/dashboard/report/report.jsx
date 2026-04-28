@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+import { TICKET_FEE } from "../../../lib/constants";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -46,7 +47,7 @@ function exportPDF(collections, filters) {
     filters.endDate ? `Until ${filters.endDate}` : "All Time";
 
   const now = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
-  const totalAmt = collections.reduce((s, r) => s + (parseFloat(r.collection_amount) || 0), 0);
+  const totalAmt = collections.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0);
 
   // Group by date then by batch for receipt rows
   const byDate = {};
@@ -60,74 +61,17 @@ function exportPDF(collections, filters) {
   const receiptRows = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, batches]) => {
     let rows = "";
     if (batches.batch1.length > 0) {
-      const total = batches.batch1.reduce((s, r) => s + (parseFloat(r.collection_amount) || 0), 0);
+      const total = batches.batch1.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0);
       rows += `<tr><td>${date}</td><td>Batch 1 (AM)</td><td style="text-align:center">${batches.batch1.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
     }
     if (batches.batch2.length > 0) {
-      const total = batches.batch2.reduce((s, r) => s + (parseFloat(r.collection_amount) || 0), 0);
+      const total = batches.batch2.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0);
       rows += `<tr><td>${date}</td><td>Batch 2 (PM)</td><td style="text-align:center">${batches.batch2.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
     }
     return rows;
   }).join("");
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<title>Collection Receipt</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #111; display: flex; justify-content: center; padding: 40px 20px; background: #f5f5f5; }
-  .receipt { background: #fff; width: 420px; padding: 32px 28px; border: 1px solid #ddd; }
-  .receipt-header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 16px; margin-bottom: 16px; }
-  .receipt-header h2 { font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
-  .receipt-header p { font-size: 11px; color: #666; margin-top: 4px; }
-  .meta { margin-bottom: 16px; font-size: 12px; color: #444; }
-  .meta span { display: block; margin-bottom: 3px; }
-  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
-  th { border-bottom: 1px solid #222; padding: 6px 4px; text-align: left; font-size: 11px; text-transform: uppercase; }
-  td { padding: 7px 4px; border-bottom: 1px solid #eee; vertical-align: top; }
-  .total-row { border-top: 2px solid #222; font-weight: bold; font-size: 13px; }
-  .total-row td { padding-top: 10px; border-bottom: none; }
-  .footer { text-align: center; font-size: 10px; color: #999; border-top: 2px dashed #ccc; padding-top: 12px; margin-top: 4px; }
-</style>
-</head>
-<body>
-<div class="receipt">
-  <div class="receipt-header">
-    <h2>🚌 Collection Receipt</h2>
-    <p>Jeepney Management System</p>
-    <p>Printed: ${now}</p>
-  </div>
-  <div class="meta">
-    <span><strong>Period:</strong> ${dateRange}</span>
-    <span><strong>Filter:</strong> ${batchLabel}</span>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Batch</th>
-        <th style="text-align:center">Tickets</th>
-        <th style="text-align:right">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${receiptRows || '<tr><td colspan="4" style="text-align:center;color:#999;padding:16px">No records</td></tr>'}
-    </tbody>
-    <tfoot>
-      <tr class="total-row">
-        <td colspan="2">TOTAL</td>
-        <td style="text-align:center">${collections.length}</td>
-        <td style="text-align:right">${peso(totalAmt)}</td>
-      </tr>
-    </tfoot>
-  </table>
-  <div class="footer">System-generated receipt — not an official document</div>
-</div>
-</body>
-</html>`;
-
+ 
   const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);
   const w = window.open(url, "_blank");
@@ -245,7 +189,7 @@ export default function Report() {
       filteredCollections.map((r) => ({
         Date: r.issued_at, Batch: r.batch, "Ticket ID": r.id,
         Driver: r.driver, Vehicle: r.vehicle, Route: r.route,
-        "Amount (PHP)": r.collection_amount,
+        "Amount (PHP)": (r.ticket_count || 1) * TICKET_FEE,
       })),
       `collection_report_${Date.now()}.csv`
     );
@@ -301,16 +245,16 @@ export default function Report() {
 
       {/* ─── Summary Cards ────────────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
-        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={summary?.batch1?.total ?? 0} accent="#3b82f6" />
-        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={summary?.batch2?.total ?? 0} accent="#f59e0b" />
-        <SummaryCard label="Today" count={summary?.today?.count ?? 0} total={summary?.today?.total ?? 0} accent="#22c55e" />
+        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={(summary?.batch1?.count ?? 0) * TICKET_FEE} accent="#3b82f6" />
+        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={(summary?.batch2?.count ?? 0) * TICKET_FEE} accent="#f59e0b" />
+        <SummaryCard label="Today" count={summary?.today?.count ?? 0} total={(summary?.today?.count ?? 0) * TICKET_FEE} accent="#22c55e" />
         <div style={{ background: "#1e3a5f", borderRadius: 10, padding: "18px 20px", flex: 1, minWidth: 160, color: "#fff" }}>
           <div style={{ fontSize: 12, color: "#93c5fd", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Grand Total</div>
           <div style={{ fontSize: 26, fontWeight: 700, margin: "6px 0 2px" }}>
             {summary?.total_tickets ?? 0}
             <span style={{ fontSize: 13, color: "#93c5fd", fontWeight: 400, marginLeft: 4 }}>tickets</span>
           </div>
-          <div style={{ fontSize: 15, color: "#7dd3fc", fontWeight: 600 }}>{peso(summary?.grand_total ?? 0)}</div>
+          <div style={{ fontSize: 15, color: "#7dd3fc", fontWeight: 600 }}>{peso((summary?.total_tickets ?? 0) * TICKET_FEE)}</div>
         </div>
       </div>
 
@@ -393,7 +337,7 @@ export default function Report() {
                     <td style={tdStyle}>{r.driver}</td>
                     <td style={tdStyle}>{r.vehicle}</td>
                     <td style={tdStyle}>{r.route}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600, color: "#16a34a", textAlign: "right" }}>{peso(r.collection_amount)}</td>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: "#16a34a", textAlign: "right" }}>{peso((r.ticket_count || 1) * TICKET_FEE)}</td>
                   </tr>
                 ))
               )}
@@ -405,7 +349,7 @@ export default function Report() {
                     Total ({filteredCollections.length} tickets)
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 700, background: "#f1f5f9", textAlign: "right", color: "#16a34a" }}>
-                    {peso(filteredCollections.reduce((s, r) => s + (parseFloat(r.collection_amount) || 0), 0))}
+                    {peso(filteredCollections.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0))}
                   </td>
                 </tr>
               </tfoot>

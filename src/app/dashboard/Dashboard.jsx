@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+import { TICKET_FEE } from "../../lib/constants";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -96,21 +97,21 @@ export default function Dashboard() {
               <StatCard
                 label="Batch 1 (AM)"
                 value={stats?.batch1_today?.count ?? 0}
-                sub={peso(stats?.batch1_today?.total)}
+                sub={peso((stats?.batch1_today?.count ?? 0) * TICKET_FEE)}
                 accent="#3b82f6"
                 icon="🌅"
               />
               <StatCard
                 label="Batch 2 (PM)"
                 value={stats?.batch2_today?.count ?? 0}
-                sub={peso(stats?.batch2_today?.total)}
+                sub={peso((stats?.batch2_today?.count ?? 0) * TICKET_FEE)}
                 accent="#f59e0b"
                 icon="🌇"
               />
               <StatCard
                 label="Today Total"
                 value={stats?.today_total?.count ?? 0}
-                sub={peso(stats?.today_total?.total)}
+                sub={peso((stats?.today_total?.count ?? 0) * TICKET_FEE)}
                 accent="#22c55e"
                 icon="📋"
               />
@@ -125,8 +126,8 @@ export default function Dashboard() {
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
               <StatCard
                 label="Total Revenue"
-                value={peso(stats?.total_revenue)}
-                sub={`${stats?.total_collected ?? 0} collected`}
+                value={peso((stats?.total_tickets ?? 0) * TICKET_FEE)}
+                sub={`${stats?.total_tickets ?? 0} tickets`}
                 accent="#8b5cf6"
                 icon="💰"
               />

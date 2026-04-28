@@ -112,4 +112,8 @@ export const apiService = {
   getDrivers() {
     return this.get("/drivers/");
   },
+
+  getUser() {
+    return this.get("/user/");
+  },
 };

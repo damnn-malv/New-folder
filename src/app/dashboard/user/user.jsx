@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 
+
 const API_BASE = "http://127.0.0.1:8000/api";
 
 const EMPTY_FORM = { username: "", email: "", first_name: "", last_name: "", password: "", role: "PERSONNEL", is_active: true };
@@ -43,15 +44,43 @@ function User() {
     e.preventDefault();
     try {
       const method = editing ? "PUT" : "POST";
-      const url = editing ? `${API_BASE}/users/${editing.id}/` : `${API_BASE}/users/`;
-      const payload = { username: form.username, email: form.email, first_name: form.first_name, last_name: form.last_name, role: form.role, is_active: form.is_active };
-      if (form.password) payload.password = form.password;
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error("Failed to save user");
+      const url = editing
+        ? `${API_BASE}/users/${editing.id}/`
+        : `${API_BASE}/users/`;
+
+      // Build payload safely
+      const payload = {
+        username: form.username || "",
+        email: form.email || "",
+        first_name: form.first_name || "",
+        last_name: form.last_name || "",
+        role: form.role || "PERSONNEL",
+        is_active: !!form.is_active,   // force boolean
+      };
+
+      if (form.password && form.password.trim() !== "") {
+        payload.password = form.password;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json(); // capture error details
+
+      if (!res.ok) {
+        throw new Error(JSON.stringify(data)); // show exact field errors
+      }
+
       fetchUsers();
       closeModal();
-    } catch (err) { setError(err.message); }
+    } catch (err) {
+      setError(err.message);
+    }
   };
+
 
   const handleEdit = (user) => {
     setEditing(user);
