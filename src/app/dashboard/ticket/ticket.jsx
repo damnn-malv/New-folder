@@ -38,12 +38,6 @@ function Ticket() {
               <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">Issue and monitor trip dispatch tickets</p>
             </div>
           </div>
-          <a href="/dashboard/reports" className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>
-            </svg>
-            Print History
-          </a>
         </div>
       </div>
 
@@ -207,7 +201,7 @@ function Ticket() {
             </table>
           </div>
           <div className="p-3 border-t border-gray-200">
-            <a href="/Report" className="flex items-center justify-center w-full py-2 text-xs font-semibold uppercase tracking-wider border border-gray-200 rounded hover:bg-gray-50 text-gray-600 transition">
+            <a href="/dashboard/Reports" className="flex items-center justify-center w-full py-2 text-xs font-semibold uppercase tracking-wider border border-gray-200 rounded hover:bg-gray-50 text-gray-600 transition">
               View Full History
             </a>
           </div>
