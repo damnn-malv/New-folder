@@ -1,12 +1,10 @@
 import { useState } from "react";
-import MainIndex from "./app/dashboard/mainIndex";
+import Login from "./pages/Login";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <>
-      <MainIndex />
+      <Login />
     </>
   );
 }
