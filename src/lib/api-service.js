@@ -11,6 +11,12 @@ export const apiService = {
       "Content-Type": "application/json",
     };
 
+    //token
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      defaultHeaders["Authorization"] = `Bearer ${token}`;
+    }
+
     const fetchOptions = {
       ...options,
       headers: {
@@ -33,6 +39,14 @@ export const apiService = {
           "content-type": response.headers.get("content-type"),
         },
       });
+
+      if (response.status === 401) {
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          fetchOptions.headers["Authorization"] = `Bearer ${localStorage.getItem("accessToken")}`;
+          response = await fetch(url, fetchOptions);
+        }
+      }
 
       // Try to parse response
       let data;
@@ -61,6 +75,40 @@ export const apiService = {
       console.error(`[API] Request failed:`, err);
       throw err;
     }
+  },
+
+  async refreshToken() {
+    const refresh = localStorage.getItem("refreshToken");
+    if (!refresh) {
+      this.logout();
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh }),
+      });
+
+      if (!response.ok) {
+        this.logout();
+        return false;
+      }
+
+      const data = await response.json();
+      localStorage.setItem("accessToken", data.access);
+      return true;
+    } catch {
+      this.logout();
+      return false;
+    }
+  },
+
+  logout() {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    window.location.href = "/"; // redirect to login
   },
 
   get(endpoint) {
@@ -128,4 +176,35 @@ export const apiService = {
   getUser() {
     return this.get("/user/");
   },
+};
+
+//login
+export const handleLogin = async (username, password, setError, navigate) => {
+  setError("");
+
+  if (!username.trim() || !password.trim()) {
+    setError("Please enter both username and password.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/token/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Invalid credentials");
+    }
+
+    const data = await response.json();
+    localStorage.setItem("accessToken", data.access);
+    localStorage.setItem("refreshToken", data.refresh);
+
+    // ✅ Redirect to dashboard after successful login
+    navigate("/dashboard");
+  } catch (err) {
+    setError(err.message);
+  }
 };
