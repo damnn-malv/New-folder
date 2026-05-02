@@ -70,6 +70,64 @@ function exportPDF(collections, filters) {
     }
     return rows;
   }).join("");
+  
+  const html = `<!DOCTYPE html>
+  <html>
+  <head>
+  <meta charset="utf-8"/>
+  <title>Collection Receipt</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #111; display: flex; justify-content: center; padding: 40px 20px; background: #f5f5f5; }
+    .receipt { background: #fff; width: 420px; padding: 32px 28px; border: 1px solid #ddd; }
+    .receipt-header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 16px; margin-bottom: 16px; }
+    .receipt-header h2 { font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
+    .receipt-header p { font-size: 11px; color: #666; margin-top: 4px; }
+    .meta { margin-bottom: 16px; font-size: 12px; color: #444; }
+    .meta span { display: block; margin-bottom: 3px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+    th { border-bottom: 1px solid #222; padding: 6px 4px; text-align: left; font-size: 11px; text-transform: uppercase; }
+    td { padding: 7px 4px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .total-row { border-top: 2px solid #222; font-weight: bold; font-size: 13px; }
+    .total-row td { padding-top: 10px; border-bottom: none; }
+    .footer { text-align: center; font-size: 10px; color: #999; border-top: 2px dashed #ccc; padding-top: 12px; margin-top: 4px; }
+  </style>
+  </head>
+  <body>
+  <div class="receipt">
+    <div class="receipt-header">
+      <h2>🚌 Collection Receipt</h2>
+      <p>Jeepney Management System</p>
+      <p>Printed: ${now}</p>
+    </div>
+    <div class="meta">
+      <span><strong>Period:</strong> ${dateRange}</span>
+      <span><strong>Filter:</strong> ${batchLabel}</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Batch</th>
+          <th style="text-align:center">Tickets</th>
+          <th style="text-align:right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${receiptRows || '<tr><td colspan="4" style="text-align:center;color:#999;padding:16px">No records</td></tr>'}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="2">TOTAL</td>
+          <td style="text-align:center">${collections.length}</td>
+          <td style="text-align:right">${peso(totalAmt)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="footer">System-generated receipt — not an official document</div>
+  </div>
+  </body>
+  </html>`;
 
  
   const blob = new Blob([html], { type: "text/html" });
