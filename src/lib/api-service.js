@@ -174,8 +174,12 @@ export const apiService = {
   },
 
   getUser() {
-    return this.get("/user/");
+    return this.get("/users/");
   },
+
+  getCurrentUser() {
+    return this.get("/current-user/");
+  }
 };
 
 //login
