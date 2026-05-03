@@ -509,7 +509,7 @@ export default function Report() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr>
-                {["Timestamp", "Ticket ID", "Action", "Batch", "Driver", "Vehicle", "Route", "Amount", "User"].map((h) => (
+                {["Timestamp", "Ticket ID", "Action", "Batch", "Driver", "Vehicle", "Route", "User"].map((h) => (
                   <th key={h} style={{ ...thStyle, fontSize: 11 }}>{h}</th>
                 ))}
               </tr>
@@ -535,9 +535,7 @@ export default function Report() {
                     <td style={tdStyle}>{l.driver}</td>
                     <td style={tdStyle}>{l.vehicle}</td>
                     <td style={tdStyle}>{l.route}</td>
-                    <td style={{ ...tdStyle, textAlign: "right", color: "#16a34a", fontWeight: 600 }}>
-                      {l.amount > 0 ? peso(l.amount) : "—"}
-                    </td>
+                    
                     <td style={{ ...tdStyle, color: "#64748b" }}>{l.user}</td>
                   </tr>
                 ))
