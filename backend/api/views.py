@@ -203,3 +203,33 @@ def dashboard_stats(request):
         'active_vehicles': Vehicle.objects.filter(is_archived=False).count(),
         'active_drivers': Driver.objects.filter(is_archived=False).count(),
     })
+
+
+@api_view(['GET'])
+def public_queue(request):
+    # Get vehicles that have tickets with status 'ISSUED'
+    vehicles_with_issued_tickets = Vehicle.objects.filter(
+        tickets__status='ISSUED',
+        is_archived=False
+    ).distinct().select_related('route', 'active_driver')
+
+    data = []
+    for vehicle in vehicles_with_issued_tickets:
+        # Get the latest issued ticket for departure time
+        latest_ticket = vehicle.tickets.filter(status='ISSUED').order_by('-issued_at').first()
+        departure_time = None
+        if latest_ticket:
+            # Convert to local time (PH time = UTC+8)
+            local_dt = latest_ticket.issued_at + timedelta(hours=8)
+            departure_time = local_dt.strftime('%I:%M %p')
+
+        data.append({
+            'id': vehicle.id,
+            'plate_number': vehicle.plate_number,
+            'driver': vehicle.active_driver.name if vehicle.active_driver else '',
+            'route': vehicle.route.full_name if vehicle.route else '',
+            'status': vehicle.get_status_display(),
+            'departure_time': departure_time,
+        })
+
+    return Response(data)

@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, DriverViewSet, VehicleViewSet, RouteViewSet, TicketViewSet
-from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats
+from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats, public_queue
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -17,4 +17,5 @@ urlpatterns = [
     path('report/chart/', report_daily_chart),
     path('logs/', transaction_logs),
     path('dashboard/stats/', dashboard_stats),
+    path('queue/', public_queue),
 ]

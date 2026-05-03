@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
+import {handleLogin, apiService} from '../lib/api-service'
 
 function Login() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -11,79 +13,25 @@ function Login() {
   const [queueData, setQueueData] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
 
-  // Mock data for public queue viewing
-  const mockQueueData = [
-    {
-      id: 1,
-      plate_number: "ABC-1234",
-      driver: "Juan Dela Cruz",
-      route: "Lingsat - San Fernando",
-      status: "Available",
-      departure_time: "2:30 PM",
-    },
-    {
-      id: 2,
-      plate_number: "DEF-5678",
-      driver: "Maria Santos",
-      route: "Tanqui - San Fernando",
-      status: "Available",
-      departure_time: "2:45 PM",
-    },
-    {
-      id: 3,
-      plate_number: "GHI-9012",
-      driver: "Pedro Reyes",
-      route: "Lingsat - San Fernando",
-      status: "On Trip",
-      departure_time: "2:15 PM",
-    },
-    {
-      id: 4,
-      plate_number: "JKL-3456",
-      driver: "Rosa Garcia",
-      route: "Tanqui - San Fernando",
-      status: "Available",
-      departure_time: "3:00 PM",
-    },
-    {
-      id: 5,
-      plate_number: "MNO-7890",
-      driver: "Carlos Morales",
-      route: "Lingsat - San Fernando",
-      status: "Available",
-      departure_time: "3:15 PM",
-    },
-  ];
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-
-    // Basic validation
-    if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    // Simulate successful login (in real app, validate against backend)
-    setIsLoggedIn(true);
-    setUsername("");
-    setPassword("");
+    await handleLogin(username, password, setError, navigate);
   };
 
-  const handleViewQueue = () => {
+  const handleViewQueue = async () => {
     setLoadingQueue(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      setQueueData(mockQueueData);
+    try {
+      const data = await apiService.get('/queue/');
+      setQueueData(data);
       setShowPublicQueue(true);
+    } catch (error) {
+      console.error('Failed to load queue:', error);
+      setError('Failed to load queue data.');
+    } finally {
       setLoadingQueue(false);
-    }, 500);
+    }
   };
 
   const handleBackToLogin = () => {
@@ -124,7 +72,7 @@ function Login() {
               <h2 className="login-title">North Central Terminal</h2>
               <p className="login-subtitle">Login to your account</p>
 
-              <form onSubmit={handleLogin} className="login-form">
+              <form onSubmit={handleSubmit} className="login-form">
                 
                 
 
