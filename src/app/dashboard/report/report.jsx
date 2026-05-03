@@ -164,8 +164,14 @@ export default function Report() {
   const [chartData, setChartData] = useState([]);
   const [logs, setLogs] = useState([]);
   const [logsTotal, setLogsTotal] = useState(0);
+  const [vehicles, setVehicles] = useState([]);
+  const [vehiclesTotal, setVehiclesTotal] = useState(0);
+  const [drivers, setDrivers] = useState([]);
+  const [driversTotal, setDriversTotal] = useState(0);
   const [showAllCollections, setShowAllCollections] = useState(false);
   const [showAllLogs, setShowAllLogs] = useState(false);
+  const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const [showAllDrivers, setShowAllDrivers] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -212,9 +218,44 @@ export default function Report() {
     }
   }, []);
 
+  const fetchVehicles = useCallback(async () => {
+    try {
+      console.log("Fetching vehicles from:", `${API_BASE}/vehicles/records/`);
+      const res = await fetch(`${API_BASE}/vehicles/records/`);
+      const data = await res.json();
+      console.log("Vehicle Records API Response:", data);
+      console.log("Status:", res.status, "OK:", res.ok);
+      if (!res.ok) {
+        console.error("API returned error status");
+      }
+      setVehicles(data.vehicles || []);
+      setVehiclesTotal(data.total || 0);
+    } catch (e) {
+      console.error("Failed to load vehicle records:", e);
+    }
+  }, []);
+
+  const fetchDrivers = useCallback(async () => {
+    try {
+      console.log("Fetching drivers from:", `${API_BASE}/drivers/records/`);
+      const res = await fetch(`${API_BASE}/drivers/records/`);
+      const data = await res.json();
+      console.log("Driver Records API Response:", data);
+      if (!res.ok) {
+        console.error("API returned error status");
+      }
+      setDrivers(data.drivers || []);
+      setDriversTotal(data.total || 0);
+    } catch (e) {
+      console.error("Failed to load driver records:", e);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
     fetchLogs();
+    fetchVehicles();
+    fetchDrivers();
   }, []);
 
   // filtered by batch toggle
@@ -227,6 +268,8 @@ export default function Report() {
   // sliced for display
   const visibleCollections = showAllCollections ? filteredCollections : filteredCollections.slice(0, 5);
   const visibleLogs = showAllLogs ? logs : logs.slice(0, 5);
+  const visibleVehicles = showAllVehicles ? vehicles : vehicles.slice(0, 5);
+  const visibleDrivers = showAllDrivers ? drivers : drivers.slice(0, 5);
 
   const handleDateChange = (field, value) => {
     setFilters((prev) => {
@@ -261,6 +304,25 @@ export default function Report() {
         Batch: l.batch, "Amount (PHP)": l.amount, User: l.user,
       })),
       `transaction_logs_${Date.now()}.csv`
+    );
+  };
+
+  const handleExportVehiclesCSV = () => {
+    exportCSV(
+      vehicles.map((v) => ({
+        Code: v.code, "Plate Number": v.plate_number,
+        Route: v.route, Driver: v.driver,
+      })),
+      `vehicle_records_${Date.now()}.csv`
+    );
+  };
+
+  const handleExportDriversCSV = () => {
+    exportCSV(
+      drivers.map((d) => ({
+        Code: d.code, Name: d.name, "Contact Number": d.contact_number,
+      })),
+      `driver_records_${Date.now()}.csv`
     );
   };
 
@@ -477,6 +539,97 @@ export default function Report() {
                       {l.amount > 0 ? peso(l.amount) : "—"}
                     </td>
                     <td style={{ ...tdStyle, color: "#64748b" }}>{l.user}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ─── Vehicle Records ─────────────────────────────────────────────────── */}
+      <div style={{ ...cardStyle, marginTop: 20 }}>
+        <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={cardTitleStyle}>Vehicle Records</span>
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              {showAllVehicles ? vehiclesTotal : Math.min(5, vehiclesTotal)} of {vehiclesTotal} records
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {vehiclesTotal > 5 && (
+              <button onClick={() => setShowAllVehicles((v) => !v)} style={btnSecondary}>
+                {showAllVehicles ? "Show Less" : "View All"}
+              </button>
+            )}
+            <button onClick={handleExportVehiclesCSV} style={btnExport("#16a34a")}>⬇ Export CSV</button>
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr>
+                {["Vehicle Code", "Plate Number", "Route", "Driver"].map((h) => (
+                  <th key={h} style={{ ...thStyle, fontSize: 11 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleVehicles.length === 0 ? (
+                <tr><td colSpan={4} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>No vehicles available.</td></tr>
+              ) : (
+                visibleVehicles.map((v, i) => (
+                  <tr key={v.code} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
+                    <td style={{ ...tdStyle, fontSize: 11, fontFamily: "monospace", color: "#475569" }}>{v.code}</td>
+                    <td style={{ ...tdStyle, fontSize: 11, fontWeight: 600 }}>{v.plate_number}</td>
+                    <td style={tdStyle}>{v.route}</td>
+                    <td style={tdStyle}>{v.driver}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ─── Driver Records ──────────────────────────────────────────────────── */}
+      <div style={{ ...cardStyle, marginTop: 20 }}>
+        <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={cardTitleStyle}>Driver Records</span>
+            <span style={{ fontSize: 12, color: "#64748b" }}>
+              {showAllDrivers ? driversTotal : Math.min(5, driversTotal)} of {driversTotal} records
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {driversTotal > 5 && (
+              <button onClick={() => setShowAllDrivers((v) => !v)} style={btnSecondary}>
+                {showAllDrivers ? "Show Less" : "View All"}
+              </button>
+            )}
+            <button onClick={handleExportDriversCSV} style={btnExport("#16a34a")}>⬇ Export CSV</button>
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr>
+                {["Driver Code", "Name", "Contact Number"].map((h) => (
+                  <th key={h} style={{ ...thStyle, fontSize: 11 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleDrivers.length === 0 ? (
+                <tr><td colSpan={3} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>No drivers available.</td></tr>
+              ) : (
+                visibleDrivers.map((d, i) => (
+                  <tr key={d.code} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
+                    <td style={{ ...tdStyle, fontSize: 11, fontFamily: "monospace", color: "#475569" }}>{d.code}</td>
+                    <td style={{ ...tdStyle, fontWeight: 600 }}>{d.name}</td>
+                    <td style={tdStyle}>{d.contact_number}</td>
                   </tr>
                 ))
               )}

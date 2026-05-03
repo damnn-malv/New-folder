@@ -47,8 +47,7 @@ function mainIndex() {
           </div>
         </div>
 
-        {/* Nav label */}
-        <div className="px-4 pt-4 pb-1 text-xs uppercase tracking-widest font-bold" style={{ color: "#c9a84c88" }}>Navigation</div>
+        
 
         {/* Nav Links */}
         <nav className="flex-1 px-2 pb-2 space-y-0.5">
