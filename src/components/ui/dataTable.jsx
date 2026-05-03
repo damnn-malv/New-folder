@@ -1,4 +1,4 @@
-const DataTable = ({ columns, data, rowRenderer }) => (
+export const DataTable = ({ columns, data, rowRenderer }) => (
   <div className="overflow-x-auto">
     <table className="w-full">
       <thead>
