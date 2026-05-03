@@ -4,60 +4,19 @@ import {
 } from "recharts";
 import { TICKET_FEE } from "../../../lib/constants";
 import { exportPDF } from "../../../lib/report/exportPDF";
+import {DataTable} from '../../../components/ui/dataTable'
+import {peso, STATUS_COLORS, today, exportCSV, SummaryCard, handleDateChange, handleClearFilter, handleExportCSV, handleExportLogsCSV, handleExportVehiclesCSV, handleExportDriversCSV, handleExportPDF} from '../../../lib/report/reportHook'
+
+import CollectionRecords from "../../../lib/report/tables/CollectionRecords";
+import TransactionLogs from '../../../lib/report/tables/TransactionLogs';
+import VehicleRecords from "../../../lib/report/tables/VehicleRecords";
+import DriverRecords from "../../../lib/report/tables/DriverRecords";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-const peso = (n) => {
-  const num = parseFloat(n);
-  if (isNaN(num)) return "₱0.00";
-  return "₱" + num.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
-const STATUS_COLORS = {
-  COLLECTED: "#22c55e",
-  ISSUED: "#3b82f6",
-  DISPATCHED: "#f59e0b",
-  CANCELLED: "#ef4444",
-  RETURNED: "#8b5cf6",
-};
-
-// ─── CSV Export ────────────────────────────────────────────────────────────────
-function exportCSV(data, filename = "report.csv") {
-  if (!data.length) return;
-  const headers = Object.keys(data[0]);
-  const rows = data.map((r) => headers.map((h) => `"${r[h] ?? ""}"`).join(","));
-  const csv = [headers.join(","), ...rows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// ─── Summary Card ──────────────────────────────────────────────────────────────
-function SummaryCard({ label, count, total, accent }) {
-  return (
-    <div style={{
-      background: "#fff", border: "1px solid #e2e8f0", borderTop: `4px solid ${accent}`,
-      borderRadius: 10, padding: "18px 20px", flex: 1, minWidth: 160,
-    }}>
-      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", margin: "6px 0 2px" }}>
-        {count}
-        <span style={{ fontSize: 13, color: "#64748b", fontWeight: 400, marginLeft: 4 }}>tickets</span>
-      </div>
-      <div style={{ fontSize: 15, color: accent, fontWeight: 600 }}>{peso(total)}</div>
-    </div>
-  );
-}
-
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function Report() {
-  const [filters, setFilters] = useState({ startDate: "", endDate: "", batch: "all" });
+  const [filters, setFilters] = useState({ startDate: today, endDate: today, batch: "all" });
   const [summary, setSummary] = useState(null);
   const [collections, setCollections] = useState([]);
   const [chartData, setChartData] = useState([]);
@@ -73,6 +32,17 @@ export default function Report() {
   const [showAllDrivers, setShowAllDrivers] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const fetchLogs = useCallback(async () => {
+  try {
+    const res = await fetch(`${API_BASE}/logs/?all=true`);
+    const data = await res.json();
+    setLogs(data.logs || []);
+    setLogsTotal(data.total || 0);
+  } catch (e) {
+    console.error("Failed to load logs");
+  }
+}, []);
 
   const buildParams = useCallback(() => {
     const p = new URLSearchParams();
@@ -106,29 +76,20 @@ export default function Report() {
     }
   }, [buildParams]);
 
-  const fetchLogs = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/logs/?all=true`);
-      const data = await res.json();
-      setLogs(data.logs || []);
-      setLogsTotal(data.total || 0);
-    } catch (e) {
-      console.error("Failed to load logs");
-    }
-  }, []);
+ 
 
   const fetchVehicles = useCallback(async () => {
     try {
-      console.log("Fetching vehicles from:", `${API_BASE}/vehicles/records/`);
-      const res = await fetch(`${API_BASE}/vehicles/records/`);
+      console.log("Fetching vehicles from:", `${API_BASE}/vehicles/`);
+      const res = await fetch(`${API_BASE}/vehicles/`);
       const data = await res.json();
       console.log("Vehicle Records API Response:", data);
       console.log("Status:", res.status, "OK:", res.ok);
       if (!res.ok) {
         console.error("API returned error status");
       }
-      setVehicles(data.vehicles || []);
-      setVehiclesTotal(data.total || 0);
+      setVehicles(Array.isArray(data) ? data : data.vehicles || []);
+      setVehiclesTotal(Array.isArray(data) ? data.length : data.total || 0);
     } catch (e) {
       console.error("Failed to load vehicle records:", e);
     }
@@ -136,15 +97,15 @@ export default function Report() {
 
   const fetchDrivers = useCallback(async () => {
     try {
-      console.log("Fetching drivers from:", `${API_BASE}/drivers/records/`);
-      const res = await fetch(`${API_BASE}/drivers/records/`);
+      console.log("Fetching drivers from:", `${API_BASE}/drivers/`);
+      const res = await fetch(`${API_BASE}/drivers/`);
       const data = await res.json();
       console.log("Driver Records API Response:", data);
       if (!res.ok) {
         console.error("API returned error status");
       }
-      setDrivers(data.drivers || []);
-      setDriversTotal(data.total || 0);
+      setDrivers(Array.isArray(data) ? data : data.drivers || []);
+      setDriversTotal(Array.isArray(data) ? data.length : data.total || 0);
     } catch (e) {
       console.error("Failed to load driver records:", e);
     }
@@ -210,7 +171,8 @@ export default function Report() {
     exportCSV(
       vehicles.map((v) => ({
         Code: v.code, "Plate Number": v.plate_number,
-        Route: v.route, Driver: v.driver,
+        Route: v.route_detail ? `${v.route_detail.origin} - San Fernando` : v.route,
+        Driver: v.active_driver_name || "—",
       })),
       `vehicle_records_${Date.now()}.csv`
     );
@@ -307,233 +269,65 @@ export default function Report() {
       </div>
 
       {/* ─── Collection Records ───────────────────────────────────────────────── */}
-      <div style={{ ...cardStyle, marginTop: 20 }}>
-        <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={cardTitleStyle}>Collection Records</span>
-            <div style={{ display: "flex", gap: 0, border: "1px solid #e2e8f0", borderRadius: 7, overflow: "hidden" }}>
-              {[["all", "All"], ["batch1", "Batch 1"], ["batch2", "Batch 2"]].map(([val, lbl]) => (
-                <button key={val} onClick={() => { setFilters((f) => ({ ...f, batch: val })); setShowAllCollections(false); }}
-                  style={{ padding: "5px 14px", fontSize: 12, fontWeight: 600, border: "none",
-                    background: filters.batch === val ? "#1e3a5f" : "#fff",
-                    color: filters.batch === val ? "#fff" : "#475569", cursor: "pointer" }}>
-                  {lbl}
-                </button>
-              ))}
-            </div>
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              {showAllCollections ? filteredCollections.length : Math.min(5, filteredCollections.length)} of {filteredCollections.length} record(s)
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleExportCSV} style={btnExport("#16a34a")}>⬇ CSV</button>
-            <button onClick={handleExportPDF} style={btnExport("#1e3a5f")}>⬇ PDF</button>
-          </div>
-        </div>
-
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr>
-                {["Date & Time", "Batch", "Ticket ID", "Driver", "Vehicle", "Route", "Amount"].map((h) => (
-                  <th key={h} style={thStyle}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleCollections.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: "24px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No records found for this period.</td></tr>
-              ) : (
-                visibleCollections.map((r, i) => (
-                  <tr key={r.id} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
-                    <td style={tdStyle}>{r.issued_at}</td>
-                    <td style={tdStyle}>
-                      <span style={{ background: r.batch === "Batch 1" ? "#dbeafe" : "#fef3c7", color: r.batch === "Batch 1" ? "#1d4ed8" : "#92400e", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
-                        {r.batch}
-                      </span>
-                    </td>
-                    <td style={{ ...tdStyle, fontFamily: "monospace", fontSize: 11, color: "#475569" }}>{r.id}</td>
-                    <td style={tdStyle}>{r.driver}</td>
-                    <td style={tdStyle}>{r.vehicle}</td>
-                    <td style={tdStyle}>{r.route}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600, color: "#16a34a", textAlign: "right" }}>{peso((r.ticket_count || 1) * TICKET_FEE)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-            {filteredCollections.length > 0 && (
-              <tfoot>
-                <tr>
-                  <td colSpan={6} style={{ ...tdStyle, fontWeight: 700, background: "#f1f5f9", textAlign: "right" }}>
-                    Total ({filteredCollections.length} tickets)
-                  </td>
-                  <td style={{ ...tdStyle, fontWeight: 700, background: "#f1f5f9", textAlign: "right", color: "#16a34a" }}>
-                    {peso(filteredCollections.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0))}
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-
-        {filteredCollections.length > 5 && (
-          <div style={{ padding: "12px 18px", borderTop: "1px solid #e2e8f0", textAlign: "center" }}>
-            <button onClick={() => setShowAllCollections((v) => !v)} style={btnSecondary}>
-              {showAllCollections ? "Show Less" : `View All ${filteredCollections.length} Records`}
-            </button>
-          </div>
-        )}
-      </div>
+      <CollectionRecords
+        filters={filters}
+        setFilters={setFilters}
+        showAllCollections={showAllCollections}
+        setShowAllCollections={setShowAllCollections}
+        filteredCollections={filteredCollections}
+        visibleCollections={showAllCollections ? filteredCollections : filteredCollections.slice(0, 5)}
+        handleExportCSV={handleExportCSV}
+        handleExportPDF={handleExportPDF}
+        peso={peso}
+        cardStyle={cardStyle}
+        cardHeaderStyle={cardHeaderStyle}
+        cardTitleStyle={cardTitleStyle}
+        btnExport={btnExport}
+        btnSecondary={btnSecondary}
+      />
 
       {/* ─── Transaction Logs ─────────────────────────────────────────────────── */}
-      <div style={{ ...cardStyle, marginTop: 20 }}>
-        <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={cardTitleStyle}>Transaction Logs</span>
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              {showAllLogs ? logsTotal : Math.min(5, logsTotal)} of {logsTotal} records
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {logsTotal > 5 && (
-              <button onClick={() => setShowAllLogs((v) => !v)} style={btnSecondary}>
-                {showAllLogs ? "Show Less" : "View All Logs"}
-              </button>
-            )}
-            <button onClick={handleExportLogsCSV} style={btnExport("#16a34a")}>⬇ Export CSV</button>
-          </div>
-        </div>
-
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr>
-                {["Timestamp", "Ticket ID", "Action", "Batch", "Driver", "Vehicle", "Route", "User"].map((h) => (
-                  <th key={h} style={{ ...thStyle, fontSize: 11 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleLogs.length === 0 ? (
-                <tr><td colSpan={9} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>No logs available.</td></tr>
-              ) : (
-                visibleLogs.map((l, i) => (
-                  <tr key={l.id + i} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
-                    <td style={{ ...tdStyle, fontSize: 11, color: "#475569" }}>{l.timestamp}</td>
-                    <td style={{ ...tdStyle, fontSize: 11, fontFamily: "monospace" }}>{l.ticket_id}</td>
-                    <td style={tdStyle}>
-                      <span style={{ background: `${STATUS_COLORS[l.action] || "#e2e8f0"}22`, color: STATUS_COLORS[l.action] || "#475569", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
-                        {l.action}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>
-                      <span style={{ background: l.batch === "Batch 1" ? "#dbeafe" : "#fef3c7", color: l.batch === "Batch 1" ? "#1d4ed8" : "#92400e", padding: "2px 6px", borderRadius: 4, fontSize: 10, fontWeight: 600 }}>
-                        {l.batch}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>{l.driver}</td>
-                    <td style={tdStyle}>{l.vehicle}</td>
-                    <td style={tdStyle}>{l.route}</td>
-                    
-                    <td style={{ ...tdStyle, color: "#64748b" }}>{l.user}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <TransactionLogs
+        logsTotal={logsTotal}
+        showAllLogs={showAllLogs}
+        setShowAllLogs={setShowAllLogs}
+        visibleLogs={showAllLogs ? logs : logs.slice(0, 5)}
+        handleExportLogsCSV={handleExportLogsCSV}
+        STATUS_COLORS={STATUS_COLORS}
+        cardStyle={cardStyle}
+        cardHeaderStyle={cardHeaderStyle}
+        cardTitleStyle={cardTitleStyle}
+        btnExport={btnExport}
+        btnSecondary={btnSecondary}
+      />
 
       {/* ─── Vehicle Records ─────────────────────────────────────────────────── */}
-      <div style={{ ...cardStyle, marginTop: 20 }}>
-        <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={cardTitleStyle}>Vehicle Records</span>
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              {showAllVehicles ? vehiclesTotal : Math.min(5, vehiclesTotal)} of {vehiclesTotal} records
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {vehiclesTotal > 5 && (
-              <button onClick={() => setShowAllVehicles((v) => !v)} style={btnSecondary}>
-                {showAllVehicles ? "Show Less" : "View All"}
-              </button>
-            )}
-            <button onClick={handleExportVehiclesCSV} style={btnExport("#16a34a")}>⬇ Export CSV</button>
-          </div>
-        </div>
-
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr>
-                {["Vehicle Code", "Plate Number", "Route", "Driver"].map((h) => (
-                  <th key={h} style={{ ...thStyle, fontSize: 11 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleVehicles.length === 0 ? (
-                <tr><td colSpan={4} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>No vehicles available.</td></tr>
-              ) : (
-                visibleVehicles.map((v, i) => (
-                  <tr key={v.code} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
-                    <td style={{ ...tdStyle, fontSize: 11, fontFamily: "monospace", color: "#475569" }}>{v.code}</td>
-                    <td style={{ ...tdStyle, fontSize: 11, fontWeight: 600 }}>{v.plate_number}</td>
-                    <td style={tdStyle}>{v.route}</td>
-                    <td style={tdStyle}>{v.driver}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <VehicleRecords
+        vehiclesTotal={vehiclesTotal}
+        showAllVehicles={showAllVehicles}
+        setShowAllVehicles={setShowAllVehicles}
+        visibleVehicles={showAllVehicles ? vehicles : vehicles.slice(0, 5)}
+        handleExportVehiclesCSV={handleExportVehiclesCSV}
+        cardStyle={cardStyle}
+        cardHeaderStyle={cardHeaderStyle}
+        cardTitleStyle={cardTitleStyle}
+        btnExport={btnExport}
+        btnSecondary={btnSecondary}
+      />
 
       {/* ─── Driver Records ──────────────────────────────────────────────────── */}
-      <div style={{ ...cardStyle, marginTop: 20 }}>
-        <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={cardTitleStyle}>Driver Records</span>
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              {showAllDrivers ? driversTotal : Math.min(5, driversTotal)} of {driversTotal} records
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {driversTotal > 5 && (
-              <button onClick={() => setShowAllDrivers((v) => !v)} style={btnSecondary}>
-                {showAllDrivers ? "Show Less" : "View All"}
-              </button>
-            )}
-            <button onClick={handleExportDriversCSV} style={btnExport("#16a34a")}>⬇ Export CSV</button>
-          </div>
-        </div>
-
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr>
-                {["Driver Code", "Name", "Contact Number"].map((h) => (
-                  <th key={h} style={{ ...thStyle, fontSize: 11 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleDrivers.length === 0 ? (
-                <tr><td colSpan={3} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>No drivers available.</td></tr>
-              ) : (
-                visibleDrivers.map((d, i) => (
-                  <tr key={d.code} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
-                    <td style={{ ...tdStyle, fontSize: 11, fontFamily: "monospace", color: "#475569" }}>{d.code}</td>
-                    <td style={{ ...tdStyle, fontWeight: 600 }}>{d.name}</td>
-                    <td style={tdStyle}>{d.contact_number}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DriverRecords
+        driversTotal={driversTotal}
+        showAllDrivers={showAllDrivers}
+        setShowAllDrivers={setShowAllDrivers}
+        visibleDrivers={showAllDrivers ? drivers : drivers.slice(0, 5)}
+        handleExportDriversCSV={handleExportDriversCSV}
+        cardStyle={cardStyle}
+        cardHeaderStyle={cardHeaderStyle}
+        cardTitleStyle={cardTitleStyle}
+        btnExport={btnExport}
+        btnSecondary={btnSecondary}
+      />
 
     </div>
   );
