@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-const API_BASE = "http://127.0.0.1:8000/api";
+import { apiService } from "../../../lib/api-service";
 
 const DESTINATION = "San Fernando";
 
@@ -65,9 +64,9 @@ function Vehicle() {
 
   const fetchDrivers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/drivers/`);
-      if (!res.ok) throw new Error("Failed to fetch drivers");
-      setDrivers(await res.json());
+      setError(null);
+      const driversData = await apiService.getDrivers();
+      setDrivers(driversData);
     } catch (err) {
       console.error(err.message);
     }
@@ -75,9 +74,8 @@ function Vehicle() {
 
   const fetchRoutes = async () => {
     try {
-      const res = await fetch(`${API_BASE}/routes/`);
-      if (!res.ok) throw new Error("Failed to fetch routes");
-      setRoutes(await res.json());
+      const routesData = await apiService.getRoutes();
+      setRoutes(routesData);
     } catch (err) {
       console.error(err.message);
     }
@@ -85,9 +83,8 @@ function Vehicle() {
 
   const fetchVehicles = async () => {
     try {
-      const res = await fetch(`${API_BASE}/vehicles/`);
-      if (!res.ok) throw new Error("Failed to fetch vehicles");
-      setVehicles(await res.json());
+      const vehiclesData = await apiService.getVehicles();
+      setVehicles(vehiclesData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -117,13 +114,7 @@ function Vehicle() {
       }
 
       // Create new route
-      const res = await fetch(`${API_BASE}/routes/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ origin }),
-      });
-      if (!res.ok) return { routeId: null, err: "Failed to create route." };
-      const created = await res.json();
+      const created = await apiService.createRoute({ origin });
       setRoutes((prev) => [...prev, created]);
       return { routeId: created.id, err: null };
     }
@@ -145,13 +136,7 @@ function Vehicle() {
       }
 
       // PATCH the current route's origin
-      const res = await fetch(`${API_BASE}/routes/${form.route}/`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ origin }),
-      });
-      if (!res.ok) return { routeId: null, err: "Failed to update route." };
-      const updated = await res.json();
+      const updated = await apiService.updateRoute(form.route, { origin });
       setRoutes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
       return { routeId: updated.id, err: null };
     }
@@ -170,11 +155,6 @@ function Vehicle() {
     }
 
     try {
-      const method = editing ? "PUT" : "POST";
-      const url = editing
-        ? `${API_BASE}/vehicles/${editing.id}/`
-        : `${API_BASE}/vehicles/`;
-
       const payload = {
         plate_number: form.plate_number,
         route: routeId,
@@ -182,12 +162,12 @@ function Vehicle() {
         active_driver: form.active_driver || null,
       };
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to save vehicle");
+      if (editing) {
+        await apiService.updateVehicle(editing.id, payload);
+      } else {
+        await apiService.createVehicle(payload);
+      }
+
       fetchVehicles();
       closeModal();
     } catch (err) {
@@ -230,8 +210,7 @@ function Vehicle() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this vehicle record?")) return;
     try {
-      const res = await fetch(`${API_BASE}/vehicles/${id}/`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete vehicle");
+      await apiService.deleteVehicle(id);
       fetchVehicles();
     } catch (err) {
       setError(err.message);

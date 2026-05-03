@@ -3,8 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { TICKET_FEE } from "../../lib/constants";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+import { apiService } from "../../lib/api-service";
 
 
 const peso = (n) => {
@@ -49,12 +48,10 @@ export default function Dashboard() {
       setLoading(true);
       setError("");
       try {
-        const [statsRes, chartRes] = await Promise.all([
-          fetch(`${API_BASE}/dashboard/stats/`),
-          fetch(`${API_BASE}/report/chart/`),
+        const [statsData, chartJson] = await Promise.all([
+          apiService.getDashboardStats(),
+          apiService.getReportChart(),
         ]);
-        const statsData = await statsRes.json();
-        const chartJson = await chartRes.json();
         setStats(statsData);
         // Last 14 days for dashboard chart
         const data = (chartJson.chart_data || []).slice(-14);

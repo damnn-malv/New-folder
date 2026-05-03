@@ -157,6 +157,18 @@ export const apiService = {
     return this.get("/vehicles/");
   },
 
+  createVehicle(data) {
+    return this.post("/vehicles/", data);
+  },
+
+  updateVehicle(id, data) {
+    return this.put(`/vehicles/${id}/`, data);
+  },
+
+  deleteVehicle(id) {
+    return this.delete(`/vehicles/${id}/`);
+  },
+
   getDrivers() {
     return this.get("/drivers/");
   },
@@ -173,12 +185,44 @@ export const apiService = {
     return this.delete(`/drivers/${id}/`);
   },
 
-  getUser() {
+  getRoutes() {
+    return this.get("/routes/");
+  },
+
+  createRoute(data) {
+    return this.post("/routes/", data);
+  },
+
+  updateRoute(id, data) {
+    return this.put(`/routes/${id}/`, data);
+  },
+
+  getUsers() {
     return this.get("/users/");
+  },
+
+  createUser(data) {
+    return this.post("/users/", data);
+  },
+
+  updateUser(id, data) {
+    return this.put(`/users/${id}/`, data);
+  },
+
+  deleteUser(id) {
+    return this.delete(`/users/${id}/`);
   },
 
   getCurrentUser() {
     return this.get("/current-user/");
+  },
+
+  getDashboardStats() {
+    return this.get("/dashboard/stats/");
+  },
+
+  getReportChart() {
+    return this.get("/report/chart/");
   }
 };
 
