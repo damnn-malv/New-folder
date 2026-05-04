@@ -79,18 +79,22 @@ export function useTicket() {
   }, []);
 
   // Filter and sort tickets based on search term
-  useEffect(() => {
-    const filtered = tickets.filter(
-      (t) =>
-        t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.vehicle?.plate_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.driver?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+ useEffect(() => {
+    const term = safeLower(searchTerm);
+
+    const filtered = tickets.filter((t) =>
+      safeLower(t.id).includes(term) ||
+      safeLower(t.vehicle?.plate_number).includes(term) ||
+      safeLower(t.driver?.name).includes(term)
     );
-    const sorted = filtered.sort((a, b) => 
-      new Date(b.issued_at) - new Date(a.issued_at)
+
+    const sorted = filtered.sort(
+      (a, b) => new Date(b.issued_at) - new Date(a.issued_at)
     );
+
     setFilteredTickets(sorted.slice(0, 10));
   }, [searchTerm, tickets]);
+
 
   // Vehicle change handler
   const handleVehicleChange = (e) => {
