@@ -43,7 +43,7 @@ export default function DriverRecords({
             <tr key={d.code} className={rowClass}>
               <td className={`${cellClass} font-mono`}>{d.code}</td>
               <td className={`${cellClass} font-semibold`}>{d.name}</td>
-              <td className={cellClass}>{d.contact_number}</td>
+              <td className={cellClass}>{d.contact}</td>
             </tr>
           )}
         />
