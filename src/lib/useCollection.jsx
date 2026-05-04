@@ -44,16 +44,21 @@ export function useCollection() {
   }, [tickets]);
 
   // Filter and sort tickets based on search term
+  const safeLower = (val) => String(val ?? "").toLowerCase();
+
   const filteredTickets = useMemo(() => {
-    const filtered = tickets.filter(
-      (t) =>
-        t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.vehicle?.plate_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.driver?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.vehicle?.route || "").toLowerCase().includes(searchTerm.toLowerCase())
+    const term = safeLower(searchTerm);
+
+    const filtered = tickets.filter((t) =>
+      safeLower(t.id).includes(term) ||
+      safeLower(t.vehicle?.plate_number).includes(term) ||
+      safeLower(t.driver?.name).includes(term) ||
+      safeLower(t.vehicle?.route_detail?.full_name).includes(term) // if you want route search
     );
+
     return filtered.sort((a, b) => new Date(b.issued_at) - new Date(a.issued_at));
   }, [searchTerm, tickets]);
+
 
   // Verify all pending tickets in a batch
   const handleVerifyBatch = async (batchName) => {

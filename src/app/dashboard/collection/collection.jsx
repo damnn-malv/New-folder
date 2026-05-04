@@ -1,6 +1,8 @@
-import React from "react";
+import {React, useState} from "react";
 import { useCollection, formatTime, formatCurrency, BatchCard } from "../../../lib/useCollection";
 import { OperationsService } from "../../../lib/operations-service";
+
+
 
 function collection() {
   const {
@@ -15,6 +17,14 @@ function collection() {
     handleVerifyBatch,
     handleResetAmount,
   } = useCollection();
+
+  //pang page
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 15;
+
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentTickets = filteredTickets.slice(startIndex, endIndex);
 
   return (
     <div className="p-6 space-y-6">
@@ -85,7 +95,7 @@ function collection() {
                 ) : filteredTickets.length === 0 ? (
                   <tr><td colSpan="6" className="p-4 text-center text-gray-500">No records found.</td></tr>
                 ) : (
-                  filteredTickets.map((ticket) => {
+                  currentTickets.map((ticket) => {
                     const effectiveBatch = OperationsService.getEffectiveBatchName(ticket);
                     return (
                       <tr key={ticket.id} className={`border-b border-gray-100 hover:bg-gray-50 transition ${ticket.is_late ? "bg-amber-50/40" : ""}`}>
@@ -117,6 +127,22 @@ function collection() {
                 )}
               </tbody>
             </table>
+          </div>
+           <div className="flex justify-center gap-2 mt-4">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => p - 1)}
+              className="px-3 py-1 text-sm bg-gray-200 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              disabled={endIndex >= filteredTickets.length}
+              onClick={() => setCurrentPage(p => p + 1)}
+              className="px-3 py-1 text-sm bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
