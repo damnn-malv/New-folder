@@ -92,6 +92,7 @@ function mainIndex() {
             <NavLink
               key={to}
               to={to}
+              end={to === "/dashboard"}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-all ${
                   isActive
