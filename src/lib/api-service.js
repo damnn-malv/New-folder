@@ -108,7 +108,7 @@ export const apiService = {
   logout() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    window.location.href = "/"; // redirect to login
+    window.location.href = "/";
   },
 
   get(endpoint) {
