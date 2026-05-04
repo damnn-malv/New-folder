@@ -89,7 +89,7 @@ function Dispatch() {
             <tr key={vehicle.id} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="p-3 text-sm font-semibold">{vehicle.plate_number}</td>
               <td className="p-3 text-sm">{getDriverName(vehicle)}</td>
-              <td className="p-3 text-sm">{vehicle.route || "—"}</td>
+              <td className="p-3 text-sm">{vehicle.route_detail?.full_name || "—"}</td>
               <td className="p-3"><span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">Available</span></td>
               <td className="p-3">
                 <button onClick={() => handleDispatch(vehicle)} className="px-3 py-1.5 text-xs font-semibold text-white rounded transition" style={{ background: "#1a2744" }}>
