@@ -12,6 +12,7 @@ function Login() {
   const [error, setError] = useState("");
   const [queueData, setQueueData] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const navigate = useNavigate();
 
@@ -38,6 +39,19 @@ function Login() {
     setShowPublicQueue(false);
     setQueueData([]);
     setIsLoggedIn(false);
+  };
+
+  const handleRefreshQueue = async () => {
+    setRefreshing(true);
+    try {
+      const data = await apiService.get('/queue/');
+      setQueueData(data);
+    } catch (error) {
+      console.error('Failed to refresh queue:', error);
+      setError('Failed to refresh queue data.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -137,12 +151,36 @@ function Login() {
                 <h2 className="queue-title">Current Jeepney Queue</h2>
                 
               </div>
-              <button
-                onClick={handleBackToLogin}
-                className="btn-back-to-login"
-              >
-                Back to Login
-              </button>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <button
+                  onClick={handleRefreshQueue}
+                  disabled={refreshing}
+                  className="btn-refresh-queue"
+                  title="Refresh queue"
+                  style={{
+                    padding: "8px 12px",
+                    background: refreshing ? "#ccc" : "#1a2744",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: refreshing ? "not-allowed" : "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "background 0.2s"
+                  }}
+                >
+                  {refreshing ? "🔄 Refreshing..." : "🔄 Refresh"}
+                </button>
+                <button
+                  onClick={handleBackToLogin}
+                  className="btn-back-to-login"
+                >
+                  Back to Login
+                </button>
+              </div>
             </div>
 
             {loadingQueue ? (
