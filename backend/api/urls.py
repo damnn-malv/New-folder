@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, DriverViewSet, VehicleViewSet, RouteViewSet, TicketViewSet, CurrentUserView
-from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats, public_queue
+from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats, public_queue,vehicle_records,driver_records
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
