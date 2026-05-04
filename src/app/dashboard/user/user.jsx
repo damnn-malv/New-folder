@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-
-const API_BASE = "http://127.0.0.1:8000/api";
+import { apiService } from "../../../lib/api-service";
 
 const EMPTY_FORM = { username: "", email: "", first_name: "", last_name: "", password: "", role: "PERSONNEL", is_active: true };
 
@@ -33,21 +31,19 @@ function User() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/users/`);
-      if (!res.ok) throw new Error("Failed to fetch users");
-      setUsers(await res.json());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+      setError(null);
+      const usersData = await apiService.getUsers();
+      setUsers(usersData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const method = editing ? "PUT" : "POST";
-      const url = editing
-        ? `${API_BASE}/users/${editing.id}/`
-        : `${API_BASE}/users/`;
-
       // Build payload safely
       const payload = {
         username: form.username || "",
@@ -62,16 +58,12 @@ function User() {
         payload.password = form.password;
       }
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const userData = editing
+        ? await apiService.updateUser(editing.id, payload)
+        : await apiService.createUser(payload);
 
-      const data = await res.json(); // capture error details
-
-      if (!res.ok) {
-        throw new Error(JSON.stringify(data)); // show exact field errors
+      if (!userData) {
+        throw new Error("Failed to save user");
       }
 
       fetchUsers();
@@ -95,10 +87,11 @@ function User() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to remove this staff account?")) return;
     try {
-      const res = await fetch(`${API_BASE}/users/${id}/`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete user");
+      await apiService.deleteUser(id);
       fetchUsers();
-    } catch (err) { setError(err.message); }
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import Dispatch from './dispatch/dispatch'
@@ -26,6 +26,37 @@ const NAV_ITEMS = [
 ];
 
 function mainIndex() {
+  const [currentUser, setCurrentUser] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+
+    apiService.getCurrentUser()
+      .then((user) => {
+        if (isMounted) setCurrentUser(user || {});
+      })
+      .catch((error) => {
+        console.error("Failed to load current user:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const userName = currentUser.first_name || currentUser.last_name
+    ? `${currentUser.first_name || ""} ${currentUser.last_name || ""}`.trim()
+    : currentUser.username || "Unknown User";
+
+  const userRole = currentUser.role || "Unknown Role";
+  const userInitials = userName
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "US";
+
   return (
     
     <div className="flex h-screen" style={{ background: "#f0f2f5" }}>
@@ -70,10 +101,10 @@ function mainIndex() {
         {/* User info */}
         <div className="border-t p-4" style={{ borderColor: "#c9a84c55" }}>
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: "#c9a84c", color: "#1a2744" }}>HM</div>
+            <div className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: "#c9a84c", color: "#1a2744" }}>{userInitials}</div>
             <div className="overflow-hidden flex-1">
-              <p className="text-sm font-semibold text-white truncate">Head Manager Sarah</p>
-              <p className="text-xs" style={{ color: "#c9a84c" }}>MANAGER</p>
+              <p className="text-sm font-semibold text-white truncate">{userName}</p>
+              <p className="text-xs" style={{ color: "#c9a84c" }}>{userRole}</p>
             </div>
             <button className="text-blue-300 hover:text-red-400 transition" onClick={apiService.logout}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
