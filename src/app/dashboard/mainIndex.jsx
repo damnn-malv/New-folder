@@ -82,14 +82,31 @@ function mainIndex() {
 
         {/* Nav Links */}
         <nav className="flex-1 px-2 pb-2 space-y-0.5">
-          {NAV_ITEMS.map(({ to, label, Icon }) => (
-            <NavLink key={to} to={to}
+          {NAV_ITEMS.filter(item => {
+            // Only show StaffRegistry if role is SUPERVISOR
+            if (item.to === "/dashboard/StaffRegistry" && userRole !== "SUPERVISOR") {
+              return false;
+            }
+            return true;
+          }).map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-all ${isActive ? "text-white" : "text-blue-200 hover:text-white hover:bg-white/10"}`
+                `flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-all ${
+                  isActive
+                    ? "text-white"
+                    : "text-blue-200 hover:text-white hover:bg-white/10"
+                }`
               }
-              style={({ isActive }) => isActive
-                ? { background: "rgba(201,168,76,0.18)", borderLeft: "3px solid #c9a84c", paddingLeft: "9px" }
-                : { borderLeft: "3px solid transparent", paddingLeft: "9px" }
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      background: "rgba(201,168,76,0.18)",
+                      borderLeft: "3px solid #c9a84c",
+                      paddingLeft: "9px",
+                    }
+                  : { borderLeft: "3px solid transparent", paddingLeft: "9px" }
               }
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
@@ -124,7 +141,9 @@ function mainIndex() {
           <Route path="Collections" element={<Collections />} />
           <Route path="Vehicles" element={<Vehicles />} />
           <Route path="Drivers" element={<Drivers />} />
-          <Route path="StaffRegistry" element={<StaffRegistry />} />
+          {userRole === "SUPERVISOR" && (
+            <Route path="StaffRegistry" element={<StaffRegistry />} />
+          )}
           <Route path="Reports" element={<Reports />} />
         </Routes>
       </main>
