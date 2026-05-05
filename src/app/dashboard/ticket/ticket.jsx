@@ -1,5 +1,6 @@
 import React from "react";
 import { useTicket, statusColor, formatTime } from "../../../lib/useTicket";
+import "../../../styles/Ticket.css";
 
 function Ticket() {
   const {
@@ -27,32 +28,38 @@ function Ticket() {
   } = useTicket();
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page Header */}
-      <div className="pb-4 mb-2 border-b-2" style={{ borderColor: "#1a2744" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 rounded" style={{ background: "#c9a84c" }} />
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "#1a2744", fontFamily: "'Source Serif 4', Georgia, serif" }}>Ticket Issuance</h1>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">Issue and monitor trip dispatch tickets</p>
-            </div>
+    <div className="ticket-page">
+
+      {/* Header */}
+      <div className="ticket-header">
+        <div className="ticket-header-left">
+          <div className="ticket-header-accent" />
+          <div>
+            <h1 className="ticket-title">Ticket Issuance</h1>
+            <p className="ticket-subtitle">Issue and monitor trip dispatch tickets</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Issue Ticket Card */}
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200" style={{ borderLeftWidth: "4px", borderLeftColor: "#1a2744" }}>
-            <h2 className="font-semibold text-gray-800" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>Issue New Ticket</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Only available vehicles and active drivers may be selected.</p>
+      <div className="ticket-grid">
+
+        {/* ── Issue Ticket Card ── */}
+        <div className="ticket-card">
+          <div className="ticket-card-header ticket-card-header--navy">
+            <span className="ticket-card-title">Issue New Ticket</span>
+            <p className="ticket-card-desc">Only available vehicles and active drivers may be selected.</p>
           </div>
-          <div className="p-4 space-y-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "#1a2744" }}>Vehicle (Plate Number)</label>
-              <select value={selectedVehicle?.id || ""} onChange={handleVehicleChange}
-                className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:ring-2">
+
+          <div className="ticket-card-body">
+
+            {/* Vehicle select */}
+            <div className="ticket-field">
+              <label className="ticket-label">Vehicle (Plate Number)</label>
+              <select
+                className="ticket-select"
+                value={selectedVehicle?.id || ""}
+                onChange={handleVehicleChange}
+              >
                 <option value="">— Select a vehicle —</option>
                 {availableVehicles.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -61,47 +68,58 @@ function Ticket() {
                 ))}
               </select>
               {vehicles.length > availableVehicles.length && (
-                <p className="text-xs text-gray-400 mt-1">{vehicles.length - availableVehicles.length} vehicle(s) excluded (On Trip / Maintenance / Has Active Ticket).</p>
+                <p className="ticket-field-hint">
+                  {vehicles.length - availableVehicles.length} vehicle(s) excluded (On Trip / Maintenance / Has Active Ticket).
+                </p>
               )}
             </div>
 
+            {/* Driver panel */}
             {selectedVehicle && (
-              <div className="p-4 rounded border border-gray-200 space-y-3" style={{ background: "#f8f9fa" }}>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Assigned Driver</span>
-                  <button type="button" onClick={() => setShowDriverModal(!showDriverModal)}
-                    className="text-xs font-bold hover:underline" style={{ color: "#1a2744" }}>
-                    CHANGE DRIVER
+              <div className="ticket-driver-panel">
+                <div className="ticket-driver-panel-top">
+                  <span className="ticket-label">Assigned Driver</span>
+                  <button
+                    type="button"
+                    className="ticket-change-btn"
+                    onClick={() => setShowDriverModal(!showDriverModal)}
+                  >
+                    {showDriverModal ? "Close" : "Change Driver"}
                   </button>
                 </div>
 
                 {selectedDriver ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0" style={{ background: "#1a2744", color: "#c9a84c" }}>
-                        {selectedDriver.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-gray-900">{selectedDriver.name}</div>
-                        <div className="text-xs text-gray-500">ID: {selectedDriver.id}</div>
-                      </div>
+                  <div className="ticket-driver-info">
+                    <div className="ticket-driver-avatar">
+                      {selectedDriver.name.charAt(0)}
                     </div>
-                    <div className="flex items-center gap-2 p-2 rounded border text-sm font-semibold" style={{ background: "#eef2ff", color: "#1a2744", borderColor: "#c7d2fe" }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>
-                      </svg>
-                      {selectedVehicle.route_detail?.full_name || "N/A"}
+                    <div className="ticket-driver-meta">
+                      <span className="ticket-driver-name">{selectedDriver.name}</span>
+                      <span className="ticket-driver-id">ID: {selectedDriver.id}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center p-3 text-sm text-gray-500 italic">No driver assigned to this vehicle</div>
+                  <p className="ticket-driver-empty">No driver assigned to this vehicle</p>
+                )}
+
+                {selectedDriver && (
+                  <div className="ticket-route-pill">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {selectedVehicle.route_detail?.full_name || "N/A"}
+                  </div>
                 )}
 
                 {showDriverModal && (
-                  <div className="border-t border-gray-200 pt-3">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Select Active Driver</label>
-                    <select value={selectedDriver?.id || ""} onChange={(e) => handleDriverChange(parseInt(e.target.value))}
-                      className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:ring-2">
+                  <div className="ticket-driver-modal">
+                    <label className="ticket-label">Select Active Driver</label>
+                    <select
+                      className="ticket-select"
+                      value={selectedDriver?.id || ""}
+                      onChange={(e) => handleDriverChange(parseInt(e.target.value))}
+                    >
                       <option value="">— Choose a driver —</option>
                       {activeDrivers.map((d) => (
                         <option key={d.id} value={d.id}>{d.name}</option>
@@ -112,85 +130,116 @@ function Ticket() {
               </div>
             )}
 
+            {/* Missed batch warning */}
             {missedBatchWarning && (
-              <div className="p-3 bg-amber-50 border border-amber-300 rounded text-sm">
-                <div className="flex gap-2 items-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5 text-amber-600">
-                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>
-                  </svg>
-                  <span className="text-amber-800 font-medium">{missedBatchWarning}</span>
+              <div className="ticket-warning">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ticket-warning-icon">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <path d="M12 9v4"/><path d="M12 17h.01"/>
+                </svg>
+                <div className="ticket-warning-body">
+                  <span className="ticket-warning-msg">{missedBatchWarning}</span>
+                  <label className="ticket-warning-check">
+                    <input
+                      type="checkbox"
+                      checked={overrideMissedBatch}
+                      onChange={(e) => setOverrideMissedBatch(e.target.checked)}
+                    />
+                    <span>Mark as late issuance — record under Batch 1 <em>(optional)</em></span>
+                  </label>
+                  <p className="ticket-warning-note">
+                    If unchecked, this ticket will count as a regular Batch 2 issuance.
+                  </p>
                 </div>
-                <label className="flex items-center gap-2 mt-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={overrideMissedBatch}
-                    onChange={(e) => setOverrideMissedBatch(e.target.checked)}
-                    className="accent-amber-600 w-4 h-4"
-                  />
-                  <span className="text-xs font-semibold text-amber-900">
-                    Mark as late issuance — record under Batch 1 <span className="font-normal text-amber-700">(optional)</span>
-                  </span>
-                </label>
-                <p className="text-xs text-amber-600 mt-1 ml-6">
-                  If unchecked, this ticket will count as a regular Batch 2 issuance.
-                </p>
               </div>
             )}
-            {successMessage && <div className="p-3 bg-green-50 text-green-800 rounded border border-green-200 text-sm font-medium">{successMessage}</div>}
-            {issueError && <div className="p-3 bg-red-50 text-red-700 rounded border border-red-200 text-sm font-medium">{issueError}</div>}
 
-            <button type="button" onClick={handleIssueTicket} disabled={issuingTicket || !selectedVehicle || !selectedDriver}
-              className="w-full flex items-center justify-center gap-2 py-3 font-bold text-white rounded transition disabled:opacity-50 disabled:pointer-events-none"
-              style={{ background: "#1a2744" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {successMessage && (
+              <div className="ticket-alert ticket-alert--success">{successMessage}</div>
+            )}
+            {issueError && (
+              <div className="ticket-alert ticket-alert--error">{issueError}</div>
+            )}
+
+            <button
+              type="button"
+              className="ticket-issue-btn"
+              onClick={handleIssueTicket}
+              disabled={issuingTicket || !selectedVehicle || !selectedDriver}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
                 <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
               </svg>
-              {issuingTicket ? "Issuing..." : "Issue Ticket"}
+              {issuingTicket ? "Issuing…" : "Issue Ticket"}
             </button>
           </div>
         </div>
 
-        {/* Recent Tickets */}
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between" style={{ borderLeftWidth: "4px", borderLeftColor: "#c9a84c" }}>
+        {/* ── Recent Tickets Card ── */}
+        <div className="ticket-card">
+          <div className="ticket-card-header ticket-card-header--navy">
             <div>
-              <h2 className="font-semibold text-gray-800" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>Recent Tickets</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Last 10 issued tickets</p>
+              <span className="ticket-card-title">Recent Tickets</span>
+              <p className="ticket-card-desc">Last 10 issued tickets</p>
             </div>
-            <div className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="ticket-search-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ticket-search-icon">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
               </svg>
-              <input className="pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none w-40"
-                placeholder="Search tickets..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <input
+                className="ticket-search"
+                placeholder="Search tickets…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+
+          <div className="ticket-table-wrap">
+            <table className="ticket-table">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr>
                   {["Ticket ID", "Vehicle", "Driver", "Time", "Status"].map((h) => (
-                    <th key={h} className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" className="p-4 text-center text-gray-500">Loading tickets...</td></tr>
+                  <tr>
+                    <td colSpan="5" className="ticket-table-state">
+                      <div className="ticket-loading-dots"><div /><div /><div /></div>
+                    </td>
+                  </tr>
                 ) : error ? (
-                  <tr><td colSpan="5" className="p-4 text-center text-red-500">Error: {error}</td></tr>
+                  <tr>
+                    <td colSpan="5" className="ticket-table-state ticket-table-state--error">
+                      Error: {error}
+                    </td>
+                  </tr>
                 ) : filteredTickets.length === 0 ? (
-                  <tr><td colSpan="5" className="p-4 text-center text-gray-500">No tickets found.</td></tr>
+                  <tr>
+                    <td colSpan="5" className="ticket-table-state">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                        <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+                      </svg>
+                      <span>No tickets found</span>
+                    </td>
+                  </tr>
                 ) : (
                   filteredTickets.map((t) => (
-                    <tr key={t.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                      <td className="p-3 text-xs text-gray-700 font-medium">{t.id}</td>
-                      <td className="p-3 text-sm">{t.vehicle?.plate_number || "N/A"}</td>
-                      <td className="p-3 text-sm">{t.driver?.name || "N/A"}</td>
-                      <td className="p-3 text-sm">{formatTime(t.issued_at)}</td>
-                      <td className="p-3">
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${statusColor[t.status] || "bg-gray-100 text-gray-800"}`}>
+                    <tr key={t.id} className="ticket-table-row">
+                      <td><span className="ticket-id-badge">#{t.id}</span></td>
+                      <td>
+                        {t.vehicle?.plate_number
+                          ? <span className="ticket-plate">{t.vehicle.plate_number}</span>
+                          : <span className="ticket-na">N/A</span>}
+                      </td>
+                      <td className="ticket-td-name">{t.driver?.name || <span className="ticket-na">N/A</span>}</td>
+                      <td className="ticket-td-time">{formatTime(t.issued_at)}</td>
+                      <td>
+                        <span className={`ticket-status ${statusColor[t.status] || "ticket-status--default"}`}>
                           {t.status}
                         </span>
                       </td>
@@ -200,12 +249,18 @@ function Ticket() {
               </tbody>
             </table>
           </div>
-          <div className="p-3 border-t border-gray-200">
-            <a href="/dashboard/Reports" className="flex items-center justify-center w-full py-2 text-xs font-semibold uppercase tracking-wider border border-gray-200 rounded hover:bg-gray-50 text-gray-600 transition">
+
+          <div className="ticket-card-footer">
+            <a href="/dashboard/Reports" className="ticket-history-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
               View Full History
             </a>
           </div>
         </div>
+
       </div>
     </div>
   );

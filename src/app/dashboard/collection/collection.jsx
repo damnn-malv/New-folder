@@ -1,8 +1,7 @@
-import {React, useState} from "react";
+import React, { useState } from "react";
 import { useCollection, formatTime, formatCurrency, BatchCard } from "../../../lib/useCollection";
 import { OperationsService } from "../../../lib/operations-service";
-
-
+import "../../../styles/Collection.css";
 
 function collection() {
   const {
@@ -18,106 +17,168 @@ function collection() {
     handleResetAmount,
   } = useCollection();
 
-  //pang page
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 15;
-
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const currentTickets = filteredTickets.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredTickets.length / rowsPerPage);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="pb-4 mb-2 border-b-2" style={{ borderColor: "#1a2744" }}>
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-8 rounded" style={{ background: "#c9a84c" }} />
+    <div className="col-page">
+
+      {/* Header */}
+      <div className="col-header">
+        <div className="col-header-left">
+          <div className="col-header-accent" />
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "#1a2744", fontFamily: "'Source Serif 4', Georgia, serif" }}>Tally & Collections</h1>
-            <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">Automated revenue recording — ₱10 per dispatch</p>
+            <h1 className="col-title">Tally &amp; Collections</h1>
+            <p className="col-subtitle">Automated revenue recording — ₱10 per dispatch</p>
           </div>
         </div>
       </div>
 
-      {error && <div className="p-3 bg-red-50 text-red-700 rounded border border-red-200 text-sm">{error}</div>}
-      {successMessage && <div className="p-3 bg-green-50 text-green-800 rounded border border-green-200 text-sm font-medium">{successMessage}</div>}
+      {error && (
+        <div className="col-alert col-alert--error">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {error}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Shift Tally */}
-        <div className="space-y-4">
-          {/* Total Revenue */}
-          <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100" style={{ borderLeftWidth: "4px", borderLeftColor: "#c9a84c" }}>
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Verified Revenue</p>
-              <p className="text-3xl font-bold mt-1" style={{ color: "#1a2744" }}>
+      {successMessage && (
+        <div className="col-alert col-alert--success">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          {successMessage}
+        </div>
+      )}
+
+      <div className="col-grid">
+
+        {/* ── Left: Shift Tally ── */}
+        <div className="col-tally">
+
+          {/* Total Revenue card */}
+          <div className="col-card col-revenue-card">
+            <div className="col-card-header col-card-header--navy">
+              <span className="col-section-eyebrow">Total Verified Revenue</span>
+              <p className="col-revenue-amount">
                 {batchStats ? formatCurrency(batchStats.totalVerified) : "₱0.00"}
               </p>
             </div>
-            <div className="p-4">
-              <button type="button" onClick={() => handleResetAmount()}
-                className="w-full py-2 text-sm font-semibold text-white rounded transition" style={{ background: "#2a5c3f" }}>
-                Collect & Record Amount
+            <div className="col-card-body col-card-body--tight">
+              <button
+                type="button"
+                className="col-collect-btn"
+                onClick={() => handleResetAmount()}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Collect &amp; Record Amount
               </button>
             </div>
           </div>
-          <BatchCard label="Batch 1 — Morning Shift (6:00 AM – 3:00 PM)" stats={batchStats?.batch1} batchKey="Batch 1" onVerify={handleVerifyBatch} verifyingBatch={verifyingBatch} />
-          <BatchCard label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)" stats={batchStats?.batch2} batchKey="Batch 2" onVerify={handleVerifyBatch} verifyingBatch={verifyingBatch} />
+
+          {/* Batch cards — BatchCard component unchanged */}
+          <BatchCard
+            label="Batch 1 — Morning Shift (6:00 AM – 3:00 PM)"
+            stats={batchStats?.batch1}
+            batchKey="Batch 1"
+            onVerify={handleVerifyBatch}
+            verifyingBatch={verifyingBatch}
+          />
+          <BatchCard
+            label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)"
+            stats={batchStats?.batch2}
+            batchKey="Batch 2"
+            onVerify={handleVerifyBatch}
+            verifyingBatch={verifyingBatch}
+          />
         </div>
 
-        {/* Collection Log */}
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between" style={{ borderLeftWidth: "4px", borderLeftColor: "#1a2744" }}>
+        {/* ── Right: Collection Log ── */}
+        <div className="col-card col-log-card">
+          <div className="col-card-header col-card-header--navy col-log-header">
             <div>
-              <h2 className="font-semibold text-gray-800" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>Collection Log</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Recent collections and verification status</p>
+              <span className="col-card-title">Collection Log</span>
+              <p className="col-card-desc">Recent collections and verification status</p>
             </div>
-            <div className="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="col-search-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="col-search-icon">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
               </svg>
-              <input className="pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded focus:outline-none w-40"
-                placeholder="Search tickets..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <input
+                className="col-search"
+                placeholder="Search tickets…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+
+          <div className="col-table-wrap">
+            <table className="col-table">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr>
                   {["Ticket ID", "Batch", "Time", "Vehicle", "Driver", "Verified"].map((h) => (
-                    <th key={h} className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="6" className="p-4 text-center text-gray-500">Loading...</td></tr>
+                  <tr>
+                    <td colSpan="6" className="col-table-state">
+                      <div className="col-loading-dots"><div /><div /><div /></div>
+                    </td>
+                  </tr>
                 ) : error ? (
-                  <tr><td colSpan="6" className="p-4 text-center text-red-500">Error: {error}</td></tr>
+                  <tr>
+                    <td colSpan="6" className="col-table-state col-table-state--error">Error: {error}</td>
+                  </tr>
                 ) : filteredTickets.length === 0 ? (
-                  <tr><td colSpan="6" className="p-4 text-center text-gray-500">No records found.</td></tr>
+                  <tr>
+                    <td colSpan="6" className="col-table-state">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      <span>No records found</span>
+                    </td>
+                  </tr>
                 ) : (
                   currentTickets.map((ticket) => {
                     const effectiveBatch = OperationsService.getEffectiveBatchName(ticket);
                     return (
-                      <tr key={ticket.id} className={`border-b border-gray-100 hover:bg-gray-50 transition ${ticket.is_late ? "bg-amber-50/40" : ""}`}>
-                        <td className="p-3 text-xs font-medium text-gray-700">{ticket.id}</td>
-                        <td className="p-3 text-xs">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-gray-700">{effectiveBatch}</span>
+                      <tr key={ticket.id} className={`col-table-row ${ticket.is_late ? "col-table-row--late" : ""}`}>
+                        <td><span className="col-id-badge">#{ticket.id}</span></td>
+                        <td>
+                          <div className="col-batch-cell">
+                            <span className="col-batch-name">{effectiveBatch}</span>
                             {ticket.is_late && (
-                              <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>
+                              <span className="col-late-tag">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                                  <path d="M12 9v4"/><path d="M12 17h.01"/>
                                 </svg>
-                                Late issuance
+                                Late
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="p-3 text-sm">{formatTime(ticket.issued_at)}</td>
-                        <td className="p-3 text-sm">{ticket.vehicle?.plate_number || "N/A"}</td>
-                        <td className="p-3 text-sm">{ticket.driver?.name || "N/A"}</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${ticket.is_verified ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        <td className="col-td-time">{formatTime(ticket.issued_at)}</td>
+                        <td>
+                          {ticket.vehicle?.plate_number
+                            ? <span className="col-plate">{ticket.vehicle.plate_number}</span>
+                            : <span className="col-na">N/A</span>}
+                        </td>
+                        <td className="col-td-name">{ticket.driver?.name || <span className="col-na">N/A</span>}</td>
+                        <td>
+                          <span className={`col-verified ${ticket.is_verified ? "col-verified--yes" : "col-verified--pending"}`}>
                             {ticket.is_verified ? "✓ Verified" : "○ Pending"}
                           </span>
                         </td>
@@ -128,23 +189,33 @@ function collection() {
               </tbody>
             </table>
           </div>
-           <div className="flex justify-center gap-2 mt-4">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(p => p - 1)}
-              className="px-3 py-1 text-sm bg-gray-200 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              disabled={endIndex >= filteredTickets.length}
-              onClick={() => setCurrentPage(p => p + 1)}
-              className="px-3 py-1 text-sm bg-gray-200 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+
+          {/* Pagination */}
+          {filteredTickets.length > rowsPerPage && (
+            <div className="col-pagination">
+              <span className="col-pagination-info">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="col-pagination-btns">
+                <button
+                  className="col-page-btn"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                >
+                  ← Prev
+                </button>
+                <button
+                  className="col-page-btn"
+                  disabled={endIndex >= filteredTickets.length}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
       </div>
     </div>
   );
