@@ -103,18 +103,8 @@ export default function Dashboard() {
           <div className="dashboard-section">
             <div className="dashboard-section-label">Overall</div>
             <div className="stat-cards-row">
-              <StatCard
-                label="Total Revenue"
-                value={peso((stats?.total_tickets ?? 0) * TICKET_FEE)}
-                sub={`${stats?.total_tickets ?? 0} tickets`}
-                
-              />
-              <StatCard
-                label="All Tickets"
-                value={stats?.total_tickets ?? 0}
-                sub="all statuses"
-                
-              />
+              
+             
               <StatCard
                 label="Active Vehicles"
                 value={stats?.active_vehicles ?? 0}
