@@ -226,7 +226,7 @@ function Dispatch() {
                         <span className="dispatch-plate dispatch-plate--trip">{vehicle.plate_number}</span>
                       </td>
                       <td className="dispatch-td-name">{getDriverName(vehicle)}</td>
-                      <td className="dispatch-td-route">{vehicle.route || "—"}</td>
+                      <td className="dispatch-td-route">{vehicle.route_detail?.full_name || "—"}</td>
                       <td>
                         <button
                           className="dispatch-btn dispatch-btn--return"
