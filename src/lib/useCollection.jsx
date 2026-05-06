@@ -10,6 +10,63 @@ export function useCollection() {
   const [batchStats, setBatchStats] = useState(null);
   const [verifyingBatch, setVerifyingBatch] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [serverTime, setServerTime] = useState(null);
+  const [verifiedBatches, setVerifiedBatches] = useState({ batch1: null, batch2: null });
+
+  const STORAGE_KEY = "batch_verifications";
+
+  const getTodayDateString = (date) => date.toISOString().split('T')[0];
+
+  const loadVerifiedBatches = () => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      const today = getTodayDateString(new Date());
+      // Reset if date changed
+      if (parsed.date !== today) {
+        setVerifiedBatches({ batch1: null, batch2: null });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, batch1: null, batch2: null }));
+      } else {
+        setVerifiedBatches({ batch1: parsed.batch1, batch2: parsed.batch2 });
+      }
+    } else {
+      const today = getTodayDateString(new Date());
+      setVerifiedBatches({ batch1: null, batch2: null });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, batch1: null, batch2: null }));
+    }
+  };
+
+  const fetchServerTime = async () => {
+    try {
+      const data = await apiService.getServerTime();
+      setServerTime(new Date(data.time));
+    } catch (err) {
+      // Fallback to client time if server time fails
+      setServerTime(new Date());
+    }
+  };
+
+  const isBatchVerifiable = (batchKey) => {
+    if (!serverTime) return false;
+    const hour = serverTime.getHours();
+    const verifiedDate = verifiedBatches[batchKey.toLowerCase()];
+    const today = getTodayDateString(serverTime);
+
+    if (verifiedDate === today) return false; // Already verified today
+
+    if (batchKey === "Batch 1") {
+      return hour >= 15;
+    } else if (batchKey === "Batch 2") {
+      return hour >= 21;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    loadVerifiedBatches();
+    fetchServerTime();
+    fetchTickets();
+  }, []);
 
   const fetchTickets = async () => {
     try {
@@ -23,10 +80,6 @@ export function useCollection() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchTickets();
-  }, []);
 
   useEffect(() => {
     if (tickets.length > 0) {
@@ -69,6 +122,12 @@ export function useCollection() {
       for (const ticket of batchTickets) {
         await apiService.patch(`/tickets/${ticket.id}/`, { is_verified: true });
       }
+
+      // Mark batch as verified today
+      const today = getTodayDateString(serverTime || new Date());
+      const updated = { ...verifiedBatches, [batchName.toLowerCase().replace(' ', '')]: today };
+      setVerifiedBatches(updated);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, ...updated }));
 
       setSuccessMessage(`${batchTickets.length} ticket(s) in ${batchName} verified successfully.`);
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -125,6 +184,7 @@ export function useCollection() {
     handleResetAmount,
     clearSuccessMessage,
     clearError,
+    isBatchVerifiable,
   };
 }
 
@@ -142,7 +202,7 @@ export const formatTime = (dateString) => {
 export const formatCurrency = (amount) =>
   new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount || 0);
 
-export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch }) => (
+export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch, isVerifiable }) => (
   <div className="bc-card">
     <div className="bc-header">
       <span className="bc-label">{label}</span>
@@ -166,12 +226,19 @@ export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch }) 
         type="button"
         className="bc-verify-btn"
         onClick={() => onVerify(batchKey)}
-        disabled={verifyingBatch === batchKey}
+        disabled={verifyingBatch === batchKey || !isVerifiable}
       >
         {verifyingBatch === batchKey ? (
           <>
             <span className="bc-spinner" />
             Verifying…
+          </>
+        ) : !isVerifiable ? (
+          <>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Not Available
           </>
         ) : (
           <>

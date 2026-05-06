@@ -7,10 +7,9 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import User, Driver, Vehicle, Route, Ticket
 from .serializers import UserSerializer, DriverSerializer, VehicleSerializer, RouteSerializer, TicketSerializer
-
-
 from rest_framework.views import APIView
 
+#viewsets
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -52,7 +51,7 @@ class TicketViewSet(viewsets.ModelViewSet):
 # Batch 1 = 05:00–11:59 (PH time, UTC+8), Batch 2 = 12:00–23:59
 def get_batch(ticket):
     local_hour = (ticket.issued_at + timedelta(hours=8)).hour
-    return 'Batch 1' if 5 <= local_hour <= 11 else 'Batch 2'
+    return 'Batch 1' if 5 <= local_hour <= 15 else 'Batch 2'
 
 
 def parse_date_start(date_str):
@@ -303,3 +302,10 @@ def public_queue(request):
         })
 
     return Response(data)
+
+
+@api_view(['GET'])
+def server_time(request):
+    """Return current server time in ISO format"""
+    now = timezone.now()
+    return Response({'time': now.isoformat()})

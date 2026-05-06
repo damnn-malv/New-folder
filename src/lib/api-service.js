@@ -30,7 +30,7 @@ export const apiService = {
     });
 
     try {
-      const response = await fetch(url, fetchOptions);
+      let response = await fetch(url, fetchOptions);
 
       // Log response status
       console.log(`[API] Response Status: ${response.status}`, {
@@ -143,6 +143,10 @@ export const apiService = {
   // Specific endpoints for this app
   getTickets() {
     return this.get("/tickets/");
+  },
+
+  getServerTime() {
+    return this.get("/server-time/");
   },
 
   createTicket(ticketData) {

@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, DriverViewSet, VehicleViewSet, RouteViewSet, TicketViewSet, CurrentUserView
-from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats, public_queue,vehicle_records,driver_records
+from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats, public_queue,vehicle_records,driver_records, server_time
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -21,4 +21,5 @@ urlpatterns = [
     path('dashboard/stats/', dashboard_stats),
     path('queue/', public_queue),
     path('current-user/', CurrentUserView.as_view(), name='current-user'),
+    path('server-time/', server_time),
 ]

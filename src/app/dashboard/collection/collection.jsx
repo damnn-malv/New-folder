@@ -15,6 +15,7 @@ function collection() {
     setSearchTerm,
     handleVerifyBatch,
     handleResetAmount,
+    isBatchVerifiable,
   } = useCollection();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,6 +69,7 @@ function collection() {
             batchKey="Batch 1"
             onVerify={handleVerifyBatch}
             verifyingBatch={verifyingBatch}
+            isVerifiable={isBatchVerifiable("Batch 1")}
           />
           <BatchCard
             label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)"
@@ -75,6 +77,7 @@ function collection() {
             batchKey="Batch 2"
             onVerify={handleVerifyBatch}
             verifyingBatch={verifyingBatch}
+            isVerifiable={isBatchVerifiable("Batch 2")}
           />
         </div>
 

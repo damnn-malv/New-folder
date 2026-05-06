@@ -174,7 +174,43 @@ function Ticket() {
               {issuingTicket ? "Issuing…" : "Issue Ticket"}
             </button>
           </div>
+         {/* ── Late Issue Ticket Card ── */}
+          <div className="ticket-card ticket-card--full">
+            <div className="ticket-card-header ticket-card-header--navy">
+              <span className="ticket-card-title">Late Issue Ticket</span>
+              <p className="ticket-card-desc">Issue tickets for past dates with batch selection</p>
+            </div>
+
+            <div className="ticket-card-body">
+              <div className="ticket-field">
+                <label className="ticket-label">Issuance Date</label>
+                <input type="date" className="ticket-select" />
+              </div>
+
+              <div className="ticket-field">
+                <label className="ticket-label">Batch</label>
+                <select className="ticket-select">
+                  <option>Batch 1 (6am–3pm)</option>
+                  <option>Batch 2 (3pm–9pm)</option>
+                </select>
+              </div>
+
+              <div className="ticket-field">
+                <label className="ticket-label">Vehicle (Plate Number)</label>
+                <select className="ticket-select">
+                  <option>— Select a vehicle —</option>
+                </select>
+              </div>
+
+              <button type="button" className="ticket-issue-btn">
+                Issue Late Ticket
+              </button>
+            </div>
+          </div>
+
         </div>
+
+        
 
         {/* ── Recent Tickets Card ── */}
         <div className="ticket-card">
