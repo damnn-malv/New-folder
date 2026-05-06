@@ -2,10 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { OperationsService } from "./operations-service";
 import { apiService } from "./api-service";
 
-/**
- * Custom hook for managing collection/tally functionality.
- * Encapsulates all state and logic for the collection page.
- */
 export function useCollection() {
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,7 +11,6 @@ export function useCollection() {
   const [verifyingBatch, setVerifyingBatch] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch tickets from API
   const fetchTickets = async () => {
     try {
       setLoading(true);
@@ -29,12 +24,10 @@ export function useCollection() {
     }
   };
 
-  // Fetch tickets on mount
   useEffect(() => {
     fetchTickets();
   }, []);
 
-  // Calculate batch stats when tickets change
   useEffect(() => {
     if (tickets.length > 0) {
       setBatchStats(OperationsService.calculateBatchStats(tickets));
@@ -43,24 +36,19 @@ export function useCollection() {
     }
   }, [tickets]);
 
-  // Filter and sort tickets based on search term
   const safeLower = (val) => String(val ?? "").toLowerCase();
 
   const filteredTickets = useMemo(() => {
     const term = safeLower(searchTerm);
-
     const filtered = tickets.filter((t) =>
       safeLower(t.id).includes(term) ||
       safeLower(t.vehicle?.plate_number).includes(term) ||
       safeLower(t.driver?.name).includes(term) ||
-      safeLower(t.vehicle?.route_detail?.full_name).includes(term) // if you want route search
+      safeLower(t.vehicle?.route_detail?.full_name).includes(term)
     );
-
     return filtered.sort((a, b) => new Date(b.issued_at) - new Date(a.issued_at));
   }, [searchTerm, tickets]);
 
-
-  // Verify all pending tickets in a batch
   const handleVerifyBatch = async (batchName) => {
     try {
       setVerifyingBatch(batchName);
@@ -92,7 +80,6 @@ export function useCollection() {
     }
   };
 
-  // Reset/collect amount for verified tickets
   const handleResetAmount = async (ticketId = null) => {
     try {
       if (!ticketId) {
@@ -118,14 +105,10 @@ export function useCollection() {
     }
   };
 
-  // Clear success message
   const clearSuccessMessage = () => setSuccessMessage("");
-
-  // Clear error
   const clearError = () => setError(null);
 
   return {
-    // State
     tickets,
     filteredTickets,
     searchTerm,
@@ -134,11 +117,9 @@ export function useCollection() {
     batchStats,
     verifyingBatch,
     successMessage,
-    // Setters
     setSearchTerm,
     setError,
     setSuccessMessage,
-    // Actions
     fetchTickets,
     handleVerifyBatch,
     handleResetAmount,
@@ -147,7 +128,6 @@ export function useCollection() {
   };
 }
 
-// Utility functions
 export const formatTime = (dateString) => {
   try {
     return new Date(dateString).toLocaleTimeString("en-US", {
@@ -160,55 +140,48 @@ export const formatTime = (dateString) => {
 };
 
 export const formatCurrency = (amount) =>
-  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
-    amount || 0
-  );
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount || 0);
 
-// Batch Card Component
 export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch }) => (
-  <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-    <div
-      className="px-4 py-3 border-b border-gray-100"
-      style={{ background: "#1a2744" }}
-    >
-      <p className="text-sm font-semibold text-white">{label}</p>
+  <div className="bc-card">
+    <div className="bc-header">
+      <span className="bc-label">{label}</span>
     </div>
-    <div className="p-4 space-y-2">
+    <div className="bc-body">
       {stats && (
-        <>
+        <div className="bc-rows">
           {[
-            { label: "Revenue", value: formatCurrency(stats.total), bold: true },
-            { label: "Active Dispatches", value: stats.count },
-            {
-              label: "Pending Verification",
-              value: stats.pending,
-              warn: stats.pending > 0,
-            },
-          ].map(({ label: l, value, bold, warn }) => (
-            <div
-              key={l}
-              className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0"
-            >
-              <span className="text-sm text-gray-500">{l}</span>
-              <span
-                className={`text-sm font-semibold ${
-                  warn ? "text-yellow-600" : "text-gray-800"
-                }`}
-              >
-                {value}
-              </span>
+            { label: "Revenue",              value: formatCurrency(stats.total), bold: true },
+            { label: "Active Dispatches",    value: stats.count },
+            { label: "Pending Verification", value: stats.pending, warn: stats.pending > 0 },
+          ].map(({ label: l, value, warn }) => (
+            <div key={l} className="bc-row">
+              <span className="bc-row-label">{l}</span>
+              <span className={`bc-row-value ${warn ? "bc-row-value--warn" : ""}`}>{value}</span>
             </div>
           ))}
-        </>
+        </div>
       )}
       <button
         type="button"
+        className="bc-verify-btn"
         onClick={() => onVerify(batchKey)}
         disabled={verifyingBatch === batchKey}
-        className="w-full mt-2 text-white text-sm font-semibold py-2 rounded transition disabled:opacity-50"
-        style={{ background: "#1a2744" }}
       >
-        {verifyingBatch === batchKey ? "Verifying..." : `Verify ${batchKey}`}
+        {verifyingBatch === batchKey ? (
+          <>
+            <span className="bc-spinner" />
+            Verifying…
+          </>
+        ) : (
+          <>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Verify {batchKey}
+          </>
+        )}
       </button>
     </div>
   </div>
