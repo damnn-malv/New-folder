@@ -61,28 +61,6 @@ function collection() {
         {/* ── Left: Shift Tally ── */}
         <div className="col-tally">
 
-          {/* Total Revenue card */}
-          <div className="col-card col-revenue-card">
-            <div className="col-card-header col-card-header--navy">
-              <span className="col-section-eyebrow">Total Verified Revenue</span>
-              <p className="col-revenue-amount">
-                {batchStats ? formatCurrency(batchStats.totalVerified) : "₱0.00"}
-              </p>
-            </div>
-            <div className="col-card-body col-card-body--tight">
-              <button
-                type="button"
-                className="col-collect-btn"
-                onClick={() => handleResetAmount()}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-                Collect &amp; Record Amount
-              </button>
-            </div>
-          </div>
-
           {/* Batch cards — BatchCard component unchanged */}
           <BatchCard
             label="Batch 1 — Morning Shift (6:00 AM – 3:00 PM)"
