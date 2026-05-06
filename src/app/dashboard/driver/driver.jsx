@@ -1,5 +1,6 @@
 import React from "react";
 import { useDriver, Field, inputCls } from "../../../lib/useDriver";
+import "../../../styles/Driver.css";
 
 function Driver() {
   const {
@@ -19,114 +20,200 @@ function Driver() {
   } = useDriver();
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page Header */}
-      <div className="pb-4 mb-2 border-b-2" style={{ borderColor: "#1a2744" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 rounded" style={{ background: "#c9a84c" }} />
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "#1a2744", fontFamily: "'Source Serif 4', Georgia, serif" }}>Driver Registry</h1>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">Manage registered drivers and duty status</p>
-            </div>
+    <div className="drv-page">
+
+      {/* Header */}
+      <div className="drv-header">
+        <div className="drv-header-left">
+          <div className="drv-header-accent" />
+          <div>
+            <h1 className="drv-title">Driver Registry</h1>
+            <p className="drv-subtitle">Manage registered drivers and duty status</p>
           </div>
-          <button onClick={handleAdd} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded transition" style={{ background: "#1a2744" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14"/><path d="M12 5v14"/>
-            </svg>
-            Register Driver
-          </button>
         </div>
+        <button className="drv-add-btn" onClick={handleAdd}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M5 12h14"/><path d="M12 5v14"/>
+          </svg>
+          Register Driver
+        </button>
       </div>
 
-      {error && !isModalOpen && <div className="p-3 bg-red-50 text-red-700 rounded border border-red-200 text-sm">{error}</div>}
+      {error && !isModalOpen && (
+        <div className="drv-alert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {error}
+        </div>
+      )}
 
-      {loading ? (
-        <div className="p-8 text-center text-gray-500">Loading...</div>
-      ) : (
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full">
+      {/* Table card */}
+      <div className="drv-card">
+        <div className="drv-table-wrap">
+          <table className="drv-table">
             <thead>
-              <tr style={{ background: "#1a2744" }}>
+              <tr>
                 {["Code", "Full Name", "Contact No.", "Status", "Actions"].map((h) => (
-                  <th key={h} className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-white">{h}</th>
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {drivers.length === 0 ? (
-                <tr><td colSpan="5" className="p-6 text-center text-gray-500">No driver records found.</td></tr>
-              ) : drivers.map((driver, idx) => (
-                <tr key={driver.id} className={`border-b border-gray-100 hover:bg-gray-50 transition ${idx % 2 === 0 ? "" : "bg-gray-50/50"}`}>
-                  <td className="p-3 text-sm font-medium text-gray-700">{driver.code}</td>
-                  <td className="p-3 text-sm font-semibold">{driver.name}</td>
-                  <td className="p-3 text-sm">{driver.contact}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${driver.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                      {driver.status === "ACTIVE" ? "Active" : "Inactive"}
-                    </span>
-                    {isDriverOnActiveTicket(driver.id) && (
-                      <span className="ml-2 px-2 py-0.5 text-xs rounded font-semibold" style={{ background: "#dbeafe", color: "#1e40af" }}>On Duty</span>
-                    )}
-                  </td>
-                  <td className="p-3 flex gap-2">
-                    <button onClick={() => handleEdit(driver)} className="px-3 py-1 text-xs font-semibold rounded transition" style={{ background: "#c9a84c", color: "#1a2744" }}>Edit</button>
-                    <button onClick={() => handleDelete(driver.id)} className="px-3 py-1 text-xs font-semibold text-white rounded transition bg-red-600 hover:bg-red-700">Delete</button>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="drv-table-state">
+                    <div className="drv-loading-dots"><div /><div /><div /></div>
                   </td>
                 </tr>
-              ))}
+              ) : drivers.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="drv-table-state">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>No driver records found</span>
+                  </td>
+                </tr>
+              ) : (
+                drivers.map((driver) => (
+                  <tr key={driver.id} className="drv-row">
+                    <td><span className="drv-code">{driver.code}</span></td>
+                    <td className="drv-td-name">{driver.name}</td>
+                    <td className="drv-td-contact">{driver.contact}</td>
+                    <td>
+                      <div className="drv-status-group">
+                        <span className={`drv-status ${driver.status === "ACTIVE" ? "drv-status--active" : "drv-status--inactive"}`}>
+                          {driver.status === "ACTIVE" ? "Active" : "Inactive"}
+                        </span>
+                        {isDriverOnActiveTicket(driver.id) && (
+                          <span className="drv-status drv-status--duty">On Duty</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="drv-actions">
+                        <button className="drv-btn drv-btn--edit" onClick={() => handleEdit(driver)}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Edit
+                        </button>
+                        <button className="drv-btn drv-btn--delete" onClick={() => handleDelete(driver.id)}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
 
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="p-4 flex items-center justify-between" style={{ background: "#1a2744" }}>
-              <h2 className="font-semibold text-white" style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}>
-                {editing ? "Edit Driver Record" : "Register New Driver"}
-              </h2>
-              <button onClick={closeModal} className="text-white/60 hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="drv-overlay" onClick={closeModal}>
+          <div className="drv-modal" onClick={(e) => e.stopPropagation()}>
+
+            <div className="drv-modal-header">
+              <div className="drv-modal-header-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <h2 className="drv-modal-title">
+                  {editing ? "Edit Driver Record" : "Register New Driver"}
+                </h2>
+              </div>
+              <button className="drv-modal-close" onClick={closeModal} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                   <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-3">
-              {error && <div className="p-2 bg-red-50 text-red-700 rounded text-sm border border-red-200">{error}</div>}
+
+            <form onSubmit={handleSubmit} className="drv-modal-body">
+              {error && (
+                <div className="drv-alert drv-alert--inline">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  {error}
+                </div>
+              )}
+
               {editing && (
                 <Field label="Driver Code">
-                  <input type="text" value={form.code} disabled className={`${inputCls} bg-gray-100 text-gray-500`} />
+                  <input type="text" value={form.code} disabled className={`${inputCls} drv-input-disabled`} />
                 </Field>
               )}
+
               <Field label="Full Name">
-                <input type="text" placeholder="Full name" value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })} required className={inputCls} />
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                  className={inputCls}
+                />
               </Field>
+
               <Field label="Contact Number">
-                <input type="text" placeholder="e.g. 09XXXXXXXXX" value={form.contact}
-                  onChange={(e) => setForm({ ...form, contact: e.target.value })} required className={inputCls} />
+                <input
+                  type="text"
+                  placeholder="e.g. 09XXXXXXXXX"
+                  value={form.contact}
+                  onChange={(e) => setForm({ ...form, contact: e.target.value })}
+                  required
+                  className={inputCls}
+                />
               </Field>
+
               <Field label="Status">
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={inputCls}>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className={inputCls}
+                >
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
                 </select>
                 {editing && isDriverOnActiveTicket(editing.id) && form.status === "INACTIVE" && (
-                  <p className="text-xs text-red-500 mt-1">⚠ This driver has an active ticket and cannot be set to Inactive.</p>
+                  <p className="drv-warn-text">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                      <path d="M12 9v4"/><path d="M12 17h.01"/>
+                    </svg>
+                    This driver has an active ticket and cannot be set to Inactive.
+                  </p>
                 )}
               </Field>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={closeModal} className="flex-1 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700 transition">Cancel</button>
-                <button type="submit" className="flex-1 py-2 text-sm font-semibold text-white rounded transition" style={{ background: "#1a2744" }}>
+
+              <div className="drv-modal-footer">
+                <button type="button" className="drv-modal-btn drv-modal-btn--cancel" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button type="submit" className="drv-modal-btn drv-modal-btn--submit">
                   {editing ? "Update Record" : "Register Driver"}
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }

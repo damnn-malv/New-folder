@@ -1,42 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { apiService } from "../../../lib/api-service";
+import "../../../styles/Vehicle.css";
 
 const DESTINATION = "San Fernando";
 
 const EMPTY_FORM = {
   plate_number: "",
-  route: "",          // route FK id (number or "")
+  route: "",
   status: "AVAILABLE",
   active_driver: null,
 };
 
-const statusColor = {
-  AVAILABLE: "bg-green-100 text-green-700",
-  ON_TRIP: "bg-blue-100 text-blue-700",
-  MAINTENANCE: "bg-yellow-100 text-yellow-700",
+const STATUS_COLOR = {
+  AVAILABLE:   "veh-status--available",
+  ON_TRIP:     "veh-status--trip",
+  MAINTENANCE: "veh-status--maintenance",
 };
 
-const statusLabel = {
-  AVAILABLE: "Available",
-  ON_TRIP: "On Trip",
+const STATUS_LABEL = {
+  AVAILABLE:   "Available",
+  ON_TRIP:     "On Trip",
   MAINTENANCE: "Under Maintenance",
 };
 
-// Field wrapper component — defined outside to prevent remount on re-render
 const Field = ({ label, children }) => (
-  <div>
-    <label
-      className="block text-xs font-semibold uppercase tracking-wider mb-1"
-      style={{ color: "#1a2744" }}
-    >
-      {label}
-    </label>
+  <div className="veh-field">
+    <label className="veh-label">{label}</label>
     {children}
   </div>
 );
-
-const inputCls =
-  "w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent";
 
 function Vehicle() {
   const [vehicles, setVehicles] = useState([]);
@@ -47,13 +39,8 @@ function Vehicle() {
   const [editing, setEditing] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-
-  // Route UI state
-  // "select"  → pick from existing routes
-  // "new"     → type a new origin to create
-  // "edit"    → edit the origin of the currently-selected route (only when editing a vehicle)
   const [routeMode, setRouteMode] = useState("select");
-  const [newOrigin, setNewOrigin] = useState("");   // used in "new" and "edit" modes
+  const [newOrigin, setNewOrigin] = useState("");
   const [routeError, setRouteError] = useState("");
 
   useEffect(() => {
@@ -65,95 +52,59 @@ function Vehicle() {
   const fetchDrivers = async () => {
     try {
       setError(null);
-      const driversData = await apiService.getDrivers();
-      setDrivers(driversData);
-    } catch (err) {
-      console.error(err.message);
-    }
+      const d = await apiService.getDrivers();
+      setDrivers(d);
+    } catch (err) { console.error(err.message); }
   };
 
   const fetchRoutes = async () => {
     try {
-      const routesData = await apiService.getRoutes();
-      setRoutes(routesData);
-    } catch (err) {
-      console.error(err.message);
-    }
+      const r = await apiService.getRoutes();
+      setRoutes(r);
+    } catch (err) { console.error(err.message); }
   };
 
   const fetchVehicles = async () => {
     try {
-      const vehiclesData = await apiService.getVehicles();
-      setVehicles(vehiclesData);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      const v = await apiService.getVehicles();
+      setVehicles(v);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
-  // ── Resolve the route ID to use before submitting ─────────────────────────
-  // Returns { routeId, error } where routeId is a number or null.
   const resolveRouteId = async () => {
     if (routeMode === "select") {
       if (!form.route) return { routeId: null, err: "Please select a route." };
       return { routeId: form.route, err: null };
     }
-
     if (routeMode === "new") {
       const origin = newOrigin.trim();
       if (!origin) return { routeId: null, err: "Please enter a route origin." };
-
-      // Check for duplicate (case-insensitive)
-      const existing = routes.find(
-        (r) => r.origin.toLowerCase() === origin.toLowerCase()
-      );
-      if (existing) {
-        // Reuse the existing route silently
-        return { routeId: existing.id, err: null };
-      }
-
-      // Create new route
+      const existing = routes.find((r) => r.origin.toLowerCase() === origin.toLowerCase());
+      if (existing) return { routeId: existing.id, err: null };
       const created = await apiService.createRoute({ origin });
       setRoutes((prev) => [...prev, created]);
       return { routeId: created.id, err: null };
     }
-
     if (routeMode === "edit") {
-      // Edit the origin of the currently-assigned route
       const origin = newOrigin.trim();
       if (!origin) return { routeId: null, err: "Please enter a route origin." };
-
-      // Check if another route already has this origin
       const existing = routes.find(
-        (r) =>
-          r.origin.toLowerCase() === origin.toLowerCase() &&
-          r.id !== form.route
+        (r) => r.origin.toLowerCase() === origin.toLowerCase() && r.id !== form.route
       );
-      if (existing) {
-        // Reuse that route
-        return { routeId: existing.id, err: null };
-      }
-
-      // PATCH the current route's origin
+      if (existing) return { routeId: existing.id, err: null };
       const updated = await apiService.updateRoute(form.route, { origin });
       setRoutes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
       return { routeId: updated.id, err: null };
     }
-
     return { routeId: null, err: "Unknown route mode." };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setRouteError("");
-
     const { routeId, err } = await resolveRouteId();
-    if (err) {
-      setRouteError(err);
-      return;
-    }
-
+    if (err) { setRouteError(err); return; }
     try {
       const payload = {
         plate_number: form.plate_number,
@@ -161,25 +112,21 @@ function Vehicle() {
         status: form.status,
         active_driver: form.active_driver || null,
       };
-
       if (editing) {
         await apiService.updateVehicle(editing.id, payload);
       } else {
         await apiService.createVehicle(payload);
       }
-
       fetchVehicles();
       closeModal();
-    } catch (err) {
-      setError(err.message);
-    }
+    } catch (err) { setError(err.message); }
   };
 
   const handleEdit = (vehicle) => {
     setEditing(vehicle);
     setForm({
       plate_number: vehicle.plate_number,
-      route: vehicle.route || "",        // route FK id
+      route: vehicle.route || "",
       status: vehicle.status,
       active_driver: vehicle.active_driver,
     });
@@ -212,52 +159,34 @@ function Vehicle() {
     try {
       await apiService.deleteVehicle(id);
       fetchVehicles();
-    } catch (err) {
-      setError(err.message);
-    }
+    } catch (err) { setError(err.message); }
   };
 
   const activeDrivers = drivers.filter((d) => d.status === "ACTIVE");
-
-  // Find the selected route object (for display in edit mode)
   const selectedRoute = routes.find((r) => r.id === form.route || r.id === Number(form.route));
 
-  // ── Route field UI ────────────────────────────────────────────────────────
   const RouteField = () => (
     <Field label="Route">
       {routeMode === "select" && (
         <>
           <select
+            className="veh-select"
             value={form.route}
             onChange={(e) => setForm({ ...form, route: e.target.value ? Number(e.target.value) : "" })}
-            className={inputCls}
           >
             <option value="">— Select a route —</option>
             {routes.filter((r) => r.is_active).map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.full_name}
-              </option>
+              <option key={r.id} value={r.id}>{r.full_name}</option>
             ))}
           </select>
-          <div className="flex gap-2 mt-1">
-            <button
-              type="button"
-              onClick={() => { setRouteMode("new"); setNewOrigin(""); }}
-              className="text-xs underline"
-              style={{ color: "#1a2744" }}
-            >
+          <div className="veh-route-actions">
+            <button type="button" className="veh-text-btn veh-text-btn--navy"
+              onClick={() => { setRouteMode("new"); setNewOrigin(""); }}>
               + Add new route
             </button>
             {editing && form.route && (
-              <button
-                type="button"
-                onClick={() => {
-                  setRouteMode("edit");
-                  setNewOrigin(selectedRoute?.origin ?? "");
-                }}
-                className="text-xs underline ml-2"
-                style={{ color: "#c9a84c" }}
-              >
+              <button type="button" className="veh-text-btn veh-text-btn--gold"
+                onClick={() => { setRouteMode("edit"); setNewOrigin(selectedRoute?.origin ?? ""); }}>
                 Edit this route's origin
               </button>
             )}
@@ -265,171 +194,129 @@ function Vehicle() {
         </>
       )}
 
-      {routeMode === "new" && (
+      {(routeMode === "new" || routeMode === "edit") && (
         <>
-          <div className="flex items-center gap-1">
+          <div className="veh-route-input-row">
             <input
               type="text"
+              className="veh-input"
               placeholder="e.g. Lingsat"
               value={newOrigin}
               onChange={(e) => setNewOrigin(e.target.value)}
-              className={inputCls}
-              style={{ flex: 1 }}
               autoFocus
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap px-2">
-              — {DESTINATION}
-            </span>
+            <span className="veh-route-dest">— {DESTINATION}</span>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="veh-field-hint">
             Destination is always <strong>{DESTINATION}</strong>. Enter the origin only.
           </p>
-          <button
-            type="button"
-            onClick={() => { setRouteMode("select"); setNewOrigin(""); }}
-            className="text-xs underline mt-1"
-            style={{ color: "#1a2744" }}
-          >
-            ← Back to route list
+          <button type="button" className="veh-text-btn veh-text-btn--navy"
+            onClick={() => { setRouteMode("select"); setNewOrigin(""); }}>
+            ← {routeMode === "edit" ? "Cancel edit" : "Back to route list"}
           </button>
         </>
       )}
 
-      {routeMode === "edit" && (
-        <>
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              placeholder="e.g. Lingsat"
-              value={newOrigin}
-              onChange={(e) => setNewOrigin(e.target.value)}
-              className={inputCls}
-              style={{ flex: 1 }}
-              autoFocus
-            />
-            <span className="text-sm font-semibold text-gray-600 whitespace-nowrap px-2">
-              — {DESTINATION}
-            </span>
-          </div>
-          <p className="text-xs text-gray-400 mt-1">
-            <strong>{DESTINATION}</strong> is fixed. You can only change the origin.
-          </p>
-          <button
-            type="button"
-            onClick={() => { setRouteMode("select"); setNewOrigin(""); }}
-            className="text-xs underline mt-1"
-            style={{ color: "#1a2744" }}
-          >
-            ← Cancel edit
-          </button>
-        </>
-      )}
-
-      {routeError && (
-        <p className="text-xs text-red-600 mt-1">{routeError}</p>
-      )}
+      {routeError && <p className="veh-field-error">{routeError}</p>}
     </Field>
   );
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Page Header */}
-      <div className="pb-4 mb-2 border-b-2" style={{ borderColor: "#1a2744" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 rounded" style={{ background: "#c9a84c" }} />
-            <div>
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: "#1a2744", fontFamily: "'Source Serif 4', Georgia, serif" }}
-              >
-              Vehicle Registry
-              </h1>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">
-                Manage registered vehicles and driver assignments
-              </p>
-            </div>
+    <div className="veh-page">
+
+      {/* Header */}
+      <div className="veh-header">
+        <div className="veh-header-left">
+          <div className="veh-header-accent" />
+          <div>
+            <h1 className="veh-title">Vehicle Registry</h1>
+            <p className="veh-subtitle">Manage registered vehicles and driver assignments</p>
           </div>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded transition"
-            style={{ background: "#1a2744" }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" /><path d="M12 5v14" />
-            </svg>
-            Register Vehicle
-          </button>
         </div>
+        <button className="veh-add-btn" onClick={handleAdd}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M5 12h14"/><path d="M12 5v14"/>
+          </svg>
+          Register Vehicle
+        </button>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 text-red-700 rounded border border-red-200 text-sm">{error}</div>
+        <div className="veh-alert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {error}
+        </div>
       )}
 
-      {loading ? (
-        <div className="p-8 text-center text-gray-500">Loading...</div>
-      ) : (
-        <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full">
+      {/* Table card */}
+      <div className="veh-card">
+        <div className="veh-table-wrap">
+          <table className="veh-table">
             <thead>
-              <tr style={{ background: "#1a2744" }}>
+              <tr>
                 {["Code", "Plate Number", "Route", "Active Driver", "Status", "Actions"].map((h) => (
-                  <th
-                    key={h}
-                    className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-white"
-                  >
-                    {h}
-                  </th>
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {vehicles.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan="6" className="p-6 text-center text-gray-500">
-                    No vehicle records found.
+                  <td colSpan="6" className="veh-table-state">
+                    <div className="veh-loading-dots"><div /><div /><div /></div>
+                  </td>
+                </tr>
+              ) : vehicles.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="veh-table-state">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                      <rect x="1" y="3" width="15" height="13" rx="1"/>
+                      <path d="M16 8h4l3 3v5h-7V8z"/>
+                      <circle cx="5.5" cy="18.5" r="2.5"/>
+                      <circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                    <span>No vehicle records found</span>
                   </td>
                 </tr>
               ) : (
-                vehicles.map((vehicle, idx) => (
-                  <tr
-                    key={vehicle.id}
-                    className={`border-b border-gray-100 hover:bg-gray-50 transition ${idx % 2 === 0 ? "" : "bg-gray-50/50"}`}
-                  >
-                    <td className="p-3 text-sm font-medium text-gray-700">{vehicle.code}</td>
-                    <td className="p-3 text-sm font-semibold">{vehicle.plate_number}</td>
-                    <td className="p-3 text-sm">
+                vehicles.map((vehicle) => (
+                  <tr key={vehicle.id} className="veh-row">
+                    <td><span className="veh-code">{vehicle.code}</span></td>
+                    <td><span className="veh-plate">{vehicle.plate_number}</span></td>
+                    <td className="veh-td-route">
                       {vehicle.route_detail
                         ? vehicle.route_detail.full_name
-                        : <span className="text-gray-400 italic">No route</span>}
+                        : <span className="veh-na">No route</span>}
                     </td>
-                    <td className="p-3 text-sm">
-                      {vehicle.active_driver_name || (
-                        <span className="text-gray-400 italic">Unassigned</span>
-                      )}
+                    <td className="veh-td-driver">
+                      {vehicle.active_driver_name || <span className="veh-na">Unassigned</span>}
                     </td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${statusColor[vehicle.status] || "bg-gray-100 text-gray-700"}`}
-                      >
-                        {statusLabel[vehicle.status] || vehicle.status}
+                    <td>
+                      <span className={`veh-status ${STATUS_COLOR[vehicle.status] || "veh-status--default"}`}>
+                        {STATUS_LABEL[vehicle.status] || vehicle.status}
                       </span>
                     </td>
-                    <td className="p-3 flex gap-2">
-                      <button
-                        onClick={() => handleEdit(vehicle)}
-                        className="px-3 py-1 text-xs font-semibold rounded transition"
-                        style={{ background: "#c9a84c", color: "#1a2744" }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(vehicle.id)}
-                        className="px-3 py-1 text-xs font-semibold text-white rounded transition bg-red-600 hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
+                    <td>
+                      <div className="veh-actions">
+                        <button className="veh-btn veh-btn--edit" onClick={() => handleEdit(vehicle)}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                          Edit
+                        </button>
+                        <button className="veh-btn veh-btn--delete" onClick={() => handleDelete(vehicle.id)}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6"/>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -437,38 +324,42 @@ function Vehicle() {
             </tbody>
           </table>
         </div>
-      )}
+      </div>
 
-      {/* ── Modal ── */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow-xl w-full max-w-md mx-4 overflow-hidden">
-            {/* Modal header */}
-            <div className="p-4 flex items-center justify-between" style={{ background: "#1a2744" }}>
-              <h2
-                className="font-semibold text-white"
-                style={{ fontFamily: "'Source Serif 4', Georgia, serif" }}
-              >
-                {editing ? "Edit Vehicle Record" : "Register New Vehicle"}
-              </h2>
-              <button onClick={closeModal} className="text-white/60 hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+        <div className="veh-overlay" onClick={closeModal}>
+          <div className="veh-modal" onClick={(e) => e.stopPropagation()}>
+
+            <div className="veh-modal-header">
+              <div className="veh-modal-header-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2">
+                  <rect x="1" y="3" width="15" height="13" rx="1"/>
+                  <path d="M16 8h4l3 3v5h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                <h2 className="veh-modal-title">
+                  {editing ? "Edit Vehicle Record" : "Register New Vehicle"}
+                </h2>
+              </div>
+              <button className="veh-modal-close" onClick={closeModal} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
                 </svg>
               </button>
             </div>
 
-            {/* Modal body */}
-            <form onSubmit={handleSubmit} className="p-4 space-y-3">
+            <form onSubmit={handleSubmit} className="veh-modal-body">
               {!editing && (
                 <Field label="Plate Number">
                   <input
                     type="text"
+                    className="veh-input"
                     placeholder="e.g. ABC 1234"
                     value={form.plate_number}
                     onChange={(e) => setForm({ ...form, plate_number: e.target.value })}
                     required
-                    className={inputCls}
                   />
                 </Field>
               )}
@@ -477,9 +368,9 @@ function Vehicle() {
 
               <Field label="Status">
                 <select
+                  className="veh-select"
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className={inputCls}
                 >
                   <option value="AVAILABLE">Available</option>
                   <option value="ON_TRIP">On Trip</option>
@@ -489,45 +380,34 @@ function Vehicle() {
 
               <Field label="Active Driver (Optional)">
                 <select
+                  className="veh-select"
                   value={form.active_driver || ""}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      active_driver: e.target.value ? parseInt(e.target.value) : null,
-                    })
+                    setForm({ ...form, active_driver: e.target.value ? parseInt(e.target.value) : null })
                   }
-                  className={inputCls}
                 >
                   <option value="">— None / Unassigned —</option>
-                  {activeDrivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name}
-                    </option>
+                  {activeDrivers.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-400 mt-1">Only active drivers are shown.</p>
+                <p className="veh-field-hint">Only active drivers are shown.</p>
               </Field>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700 transition"
-                >
+              <div className="veh-modal-footer">
+                <button type="button" className="veh-modal-btn veh-modal-btn--cancel" onClick={closeModal}>
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 text-sm font-semibold text-white rounded transition"
-                  style={{ background: "#1a2744" }}
-                >
+                <button type="submit" className="veh-modal-btn veh-modal-btn--submit">
                   {editing ? "Update Record" : "Register Vehicle"}
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
