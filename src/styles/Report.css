@@ -1,5 +1,6 @@
 /* Report.css — inherits CSS vars from mainIndex.css */
 
+/* ── Page ── */
 .rpt-page {
   padding: 28px 32px;
   background: var(--bg-page);
@@ -22,11 +23,7 @@
   border-bottom: 1px solid var(--border-soft);
 }
 
-.rpt-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.rpt-header-left { display: flex; align-items: center; gap: 12px; }
 
 .rpt-header-accent {
   width: 4px;
@@ -44,11 +41,7 @@
   letter-spacing: -0.02em;
 }
 
-.rpt-subtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0;
-}
+.rpt-subtitle { font-size: 13px; color: var(--text-secondary); margin: 0; }
 
 /* ── Alert ── */
 .rpt-alert {
@@ -80,17 +73,8 @@
   transition: background 0.25s, border-color 0.25s;
 }
 
-.rpt-filter-fields {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.rpt-filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.rpt-filter-fields { display: flex; gap: 14px; flex-wrap: wrap; }
+.rpt-filter-field  { display: flex; flex-direction: column; gap: 6px; }
 
 .rpt-label {
   font-size: 10.5px;
@@ -118,12 +102,7 @@
   box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
 }
 
-.rpt-filter-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
+.rpt-filter-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 /* ── Buttons ── */
 .rpt-btn {
@@ -140,7 +119,7 @@
   white-space: nowrap;
 }
 
-.rpt-btn:hover:not(:disabled) { opacity: 0.87; transform: translateY(-1px); }
+.rpt-btn:hover:not(:disabled)  { opacity: 0.87; transform: translateY(-1px); }
 .rpt-btn:active:not(:disabled) { transform: translateY(0); }
 .rpt-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -162,7 +141,7 @@
   border-color: rgba(201,168,76,0.3);
 }
 
-/* Export buttons — child tables call btnExport(color) → "rpt-btn-export rpt-btn-export--{color}" */
+/* Export buttons */
 .rpt-btn-export {
   display: inline-flex;
   align-items: center;
@@ -173,29 +152,21 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
   color: #fff;
   white-space: nowrap;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
-.rpt-btn-export:hover { opacity: 0.85; transform: translateY(-1px); }
+.rpt-btn-export:hover  { opacity: 0.85; transform: translateY(-1px); }
 .rpt-btn-export:active { transform: translateY(0); }
 
-/* Color variants — child components pass a color string */
-.rpt-btn-export--green,
-.rpt-btn-export--\#16a34a  { background: linear-gradient(135deg, #166534 0%, #15803d 100%); }
-.rpt-btn-export--red,
-.rpt-btn-export--\#dc2626   { background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); }
-.rpt-btn-export--blue,
-.rpt-btn-export--\#2563eb   { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); }
-.rpt-btn-export--amber,
-.rpt-btn-export--\#d97706   { background: linear-gradient(135deg, #b45309 0%, #d97706 100%); }
-.rpt-btn-export--purple,
-.rpt-btn-export--\#7c3aed   { background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%); }
-/* Fallback for any colour string not listed above */
-.rpt-btn-export             { background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%); }
+.rpt-btn-export--green { background: linear-gradient(135deg, #166534 0%, #15803d 100%); }
+.rpt-btn-export--navy  { background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%); }
+.rpt-btn-export--red   { background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); }
+.rpt-btn-export--blue  { background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); }
+.rpt-btn-export--amber { background: linear-gradient(135deg, #b45309 0%, #d97706 100%); }
 
-/* Spinner inside primary button */
+/* Spinner */
 .rpt-spinner {
   width: 13px;
   height: 13px;
@@ -208,7 +179,7 @@
 
 @keyframes rpt-spin { to { transform: rotate(360deg); } }
 
-/* ── Summary row ── */
+/* ── Summary Cards ── */
 .rpt-summary-row {
   display: flex;
   gap: 16px;
@@ -216,6 +187,50 @@
 }
 
 .rpt-summary-row > * { flex: 1; min-width: 150px; }
+
+/* SummaryCard rendered by reportHook */
+.rpt-summary-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid transparent;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.25s, border-color 0.25s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rpt-summary-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-label);
+}
+
+.rpt-summary-count {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+
+.rpt-summary-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: 6px;
+}
+
+.rpt-summary-total {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+}
 
 /* Grand Total card */
 .rpt-grand-card {
@@ -226,6 +241,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
+  min-width: 150px;
 }
 
 .rpt-grand-label {
@@ -258,7 +275,7 @@
   color: rgba(255,255,255,0.75);
 }
 
-/* ── Card base (used by chart + passed as className to child tables) ── */
+/* ── Card (chart + child sections) ── */
 .rpt-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -267,6 +284,8 @@
   box-shadow: var(--shadow-sm);
   transition: background 0.25s, border-color 0.25s;
 }
+
+
 
 .rpt-card-header {
   padding: 14px 20px;
@@ -278,11 +297,26 @@
   flex-wrap: wrap;
 }
 
+.rpt-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rpt-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .rpt-card-title {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .rpt-chart-badge {
@@ -297,9 +331,6 @@
 
 .rpt-chart-body { padding: 12px 8px 8px; }
 
-.rpt-chart-card { margin-bottom: 0; }
-
-/* ── Empty state ── */
 .rpt-empty {
   padding: 40px;
   text-align: center;
@@ -307,61 +338,178 @@
   font-size: 13px;
 }
 
-/* ============================================================
-   SHARED TABLE STYLES
-   Child components (CollectionRecords, TransactionLogs, etc.)
-   receive cardStyle="rpt-card" etc. and apply them as className.
-   These classes below cover the th/td inside those child tables
-   when child components use the shared table markup pattern.
-   ============================================================ */
+/* ── Batch toggle ── */
+.rpt-batch-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
 
-/* Child tables wrap their content in a card passed via cardStyle prop.
-   We also provide global helper classes they can use directly. */
+.rpt-batch-btn {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.rpt-batch-btn + .rpt-batch-btn { border-left: 1px solid var(--border); }
+
+.rpt-batch-btn--active {
+  background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%);
+  color: #fff;
+}
+
+/* ── Record count ── */
+.rpt-record-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Totals row ── */
+.rpt-totals-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  background: var(--bg-page);
+  border-top: 1px solid var(--border-soft);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rpt-totals-amount { color: #15803d; }
+
+/* ── Show more ── */
+.rpt-show-more {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  justify-content: center;
+}
+
+/* ── DataTable ── */
+.rpt-table-wrap { overflow-x: auto; }
+
+.rpt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rpt-thead-row {
+  background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%);
+}
 
 .rpt-th {
-  padding: 10px 14px;
+  padding: 11px 14px;
   text-align: left;
   font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--text-label);
-  background: var(--bg-page);
-  border-bottom: 1px solid var(--border);
+  color: rgba(255,255,255,0.85);
   white-space: nowrap;
 }
+
+.rpt-tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background 0.12s;
+}
+
+.rpt-tr:last-child { border-bottom: none; }
+.rpt-tr:hover { background: var(--bg-hover); }
 
 .rpt-td {
   padding: 11px 14px;
   color: var(--text-primary);
-  font-size: 13px;
-  border-bottom: 1px solid var(--border-soft);
-  white-space: nowrap;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
-.rpt-tr:last-child .rpt-td { border-bottom: none; }
-.rpt-tr:hover .rpt-td { background: var(--bg-hover); }
+.rpt-td-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Cell helpers ── */
+.rpt-mono {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+.rpt-bold   { font-weight: 600; }
+.rpt-muted  { color: var(--text-secondary); }
+.rpt-amount { font-weight: 700; color: #15803d; text-align: right; }
+.rpt-na     { color: var(--text-secondary); font-style: italic; }
+
+/* Plate badge */
+.rpt-plate {
+  display: inline-block;
+  background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%);
+  color: var(--gold);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Batch pills */
+.rpt-batch-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rpt-batch-pill--b1 { background: rgba(59,130,246,0.12);  color: #1d4ed8; }
+.rpt-batch-pill--b2 { background: rgba(245,158,11,0.12); color: #b45309; }
+
+/* Action pill (TransactionLogs — color set via inline style for dynamic STATUS_COLORS) */
+.rpt-action-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .rpt-summary-row { gap: 12px; }
   .rpt-summary-row > * { min-width: 130px; }
 }
 
 @media (max-width: 640px) {
   .rpt-page { padding: 20px 16px; gap: 16px; }
 
-  .rpt-filter-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
+  .rpt-filter-bar { flex-direction: column; align-items: flex-start; }
   .rpt-filter-actions { width: 100%; }
   .rpt-btn { width: 100%; justify-content: center; }
 
+  .rpt-card-header { flex-direction: column; align-items: flex-start; }
+  .rpt-card-header-actions { flex-wrap: wrap; }
+
   .rpt-summary-row { gap: 10px; }
   .rpt-summary-row > * { min-width: 120px; }
+  .rpt-grand-count, .rpt-summary-count { font-size: 22px; }
 
-  .rpt-grand-count { font-size: 22px; }
+  .rpt-th, .rpt-td { padding: 9px 10px; }
 }

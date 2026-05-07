@@ -18,53 +18,6 @@ import "../../../styles/Report.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-/* ── Style objects passed to child components (they use style={} not className) ── */
-const cardStyle = {
-  background: "var(--bg-surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  overflow: "hidden",
-  boxShadow: "var(--shadow-sm)",
-};
-
-const cardHeaderStyle = {
-  padding: "14px 20px",
-  borderBottom: "1px solid var(--border-soft)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 12,
-  flexWrap: "wrap",
-};
-
-const cardTitleStyle = {
-  fontSize: 14,
-  fontWeight: 700,
-  color: "var(--text-primary)",
-  letterSpacing: "-0.01em",
-};
-
-const btnSecondary = {
-  background: "var(--bg-page)",
-  color: "var(--text-secondary)",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  padding: "7px 16px",
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const btnExport = (color) => ({
-  background: color,
-  color: "#fff",
-  border: "none",
-  borderRadius: 7,
-  padding: "6px 14px",
-  fontSize: 12,
-  fontWeight: 700,
-  cursor: "pointer",
-});
 
 export default function Report() {
   const [filters, setFilters]                       = useState({ startDate: today, endDate: today, batch: "all" });
@@ -267,9 +220,9 @@ export default function Report() {
 
       {/* Summary Cards */}
       <div className="rpt-summary-row">
-        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={(summary?.batch1?.count ?? 0) * TICKET_FEE} accent="#3b82f6" />
-        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={(summary?.batch2?.count ?? 0) * TICKET_FEE} accent="#f59e0b" />
-        <SummaryCard label="Today"        count={summary?.today?.count  ?? 0} total={(summary?.today?.count  ?? 0) * TICKET_FEE} accent="#22c55e" />
+        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={(summary?.batch1?.count ?? 0) * TICKET_FEE} accent="#c9a84c" />
+        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={(summary?.batch2?.count ?? 0) * TICKET_FEE} accent="#c9a84c" />
+        <SummaryCard label="Today"        count={summary?.today?.count  ?? 0} total={(summary?.today?.count  ?? 0) * TICKET_FEE} accent="#c9a84c" />
         <div className="rpt-grand-card">
           <span className="rpt-grand-label">Grand Total</span>
           <div className="rpt-grand-count">
@@ -281,7 +234,7 @@ export default function Report() {
       </div>
 
       {/* Line Chart */}
-      <div className="rpt-card rpt-chart-card">
+      <div className="rpt-card">
         <div className="rpt-card-header">
           <span className="rpt-card-title">Daily Collections — Batch 1 vs Batch 2</span>
           <span className="rpt-chart-badge">All time</span>
@@ -310,7 +263,7 @@ export default function Report() {
         )}
       </div>
 
-      {/* Collection Records */}
+      {/* Child table sections — style props kept for backward compat but unused */}
       <CollectionRecords
         filters={filters} setFilters={setFilters}
         showAllCollections={showAllCollections} setShowAllCollections={setShowAllCollections}
@@ -318,39 +271,28 @@ export default function Report() {
         visibleCollections={showAllCollections ? filteredCollections : filteredCollections.slice(0, 5)}
         handleExportCSV={handleExportCSV} handleExportPDF={handleExportPDF}
         peso={peso}
-        cardStyle={cardStyle} cardHeaderStyle={cardHeaderStyle} cardTitleStyle={cardTitleStyle}
-        btnExport={btnExport} btnSecondary={btnSecondary}
       />
 
-      {/* Transaction Logs */}
       <TransactionLogs
         logsTotal={logsTotal}
         showAllLogs={showAllLogs} setShowAllLogs={setShowAllLogs}
         visibleLogs={showAllLogs ? logs : logs.slice(0, 5)}
         handleExportLogsCSV={handleExportLogsCSV}
         STATUS_COLORS={STATUS_COLORS}
-        cardStyle={cardStyle} cardHeaderStyle={cardHeaderStyle} cardTitleStyle={cardTitleStyle}
-        btnExport={btnExport} btnSecondary={btnSecondary}
       />
 
-      {/* Vehicle Records */}
       <VehicleRecords
         vehiclesTotal={vehiclesTotal}
         showAllVehicles={showAllVehicles} setShowAllVehicles={setShowAllVehicles}
         visibleVehicles={showAllVehicles ? vehicles : vehicles.slice(0, 5)}
         handleExportVehiclesCSV={handleExportVehiclesCSV}
-        cardStyle={cardStyle} cardHeaderStyle={cardHeaderStyle} cardTitleStyle={cardTitleStyle}
-        btnExport={btnExport} btnSecondary={btnSecondary}
       />
 
-      {/* Driver Records */}
       <DriverRecords
         driversTotal={driversTotal}
         showAllDrivers={showAllDrivers} setShowAllDrivers={setShowAllDrivers}
         visibleDrivers={showAllDrivers ? drivers : drivers.slice(0, 5)}
         handleExportDriversCSV={handleExportDriversCSV}
-        cardStyle={cardStyle} cardHeaderStyle={cardHeaderStyle} cardTitleStyle={cardTitleStyle}
-        btnExport={btnExport} btnSecondary={btnSecondary}
       />
 
     </div>

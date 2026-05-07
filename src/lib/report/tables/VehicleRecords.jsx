@@ -13,46 +13,48 @@ export default function VehicleRecords({
   btnSecondary,
 }) {
   return (
-    <div style={{ ...cardStyle, marginTop: 20 }}>
-      {/* Header */}
-      <div style={{ ...cardHeaderStyle, justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={cardTitleStyle}>Vehicle Records</span>
-          <span style={{ fontSize: 12, color: "#64748b" }}>
+    <div className="rpt-card rpt-section">
+      <div className="rpt-card-header">
+        <div className="rpt-card-header-left">
+          <span className="rpt-card-title">Vehicle Records</span>
+          <span className="rpt-record-count">
             {showAllVehicles ? vehiclesTotal : Math.min(5, vehiclesTotal)} of {vehiclesTotal} records
           </span>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="rpt-card-header-actions">
           {vehiclesTotal > 5 && (
-            <button onClick={() => setShowAllVehicles((v) => !v)} style={btnSecondary}>
+            <button className="rpt-btn rpt-btn--secondary" onClick={() => setShowAllVehicles((v) => !v)}>
               {showAllVehicles ? "Show Less" : "View All"}
             </button>
           )}
-          <button onClick={handleExportVehiclesCSV} style={btnExport("#16a34a")}>
-            ⬇ Export CSV
+          <button className="rpt-btn-export rpt-btn-export--green" onClick={handleExportVehiclesCSV}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div style={{ overflowX: "auto" }}>
-        <DataTable
-          columns={["Vehicle Code", "Plate Number", "Route", "Driver"]}
-          data={visibleVehicles}
-          rowRenderer={(v, idx, { rowClass, cellClass }) => (
-            <tr key={v.code} className={rowClass}>
-              <td className={`${cellClass} font-mono text-gray-700`}>{v.code}</td>
-              <td className={`${cellClass} font-semibold`}>{v.plate_number}</td>
-              <td className={cellClass}>
-                {v.route_detail ? `${v.route_detail.origin} - San Fernando` : v.route}
-              </td>
-              <td className={cellClass}>
-                {v.active_driver_name || "—"}
-              </td>
-            </tr>
-          )}
-        />
-      </div>
+      <DataTable
+        columns={["Vehicle Code", "Plate Number", "Route", "Driver"]}
+        data={visibleVehicles}
+        rowRenderer={(v, idx, { rowClass, cellClass }) => (
+          <tr key={v.code} className={rowClass}>
+            <td className={`${cellClass} rpt-mono`}>{v.code}</td>
+            <td className={cellClass}>
+              <span className="rpt-plate">{v.plate_number}</span>
+            </td>
+            <td className={cellClass}>
+              {v.route_detail ? `${v.route_detail.origin} - San Fernando` : v.route}
+            </td>
+            <td className={cellClass}>
+              {v.active_driver_name || <span className="rpt-na">Unassigned</span>}
+            </td>
+          </tr>
+        )}
+      />
     </div>
   );
 }

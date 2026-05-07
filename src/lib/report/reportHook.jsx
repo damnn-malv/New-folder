@@ -5,16 +5,15 @@ export const peso = (n) => {
 };
 
 export const STATUS_COLORS = {
-  COLLECTED: "#22c55e",
-  ISSUED: "#3b82f6",
+  COLLECTED:  "#22c55e",
+  ISSUED:     "#3b82f6",
   DISPATCHED: "#f59e0b",
-  CANCELLED: "#ef4444",
-  RETURNED: "#8b5cf6",
+  CANCELLED:  "#ef4444",
+  RETURNED:   "#8b5cf6",
 };
 
 export const today = new Date().toISOString().split("T")[0];
 
-// ─── CSV Export ────────────────────────────────────────────────────────────────
 export function exportCSV(data, filename = "report.csv") {
   if (!data.length) return;
   const headers = Object.keys(data[0]);
@@ -29,81 +28,73 @@ export function exportCSV(data, filename = "report.csv") {
   URL.revokeObjectURL(url);
 }
 
-// ─── Summary Card ──────────────────────────────────────────────────────────────
 export function SummaryCard({ label, count, total, accent }) {
   return (
-    <div style={{
-      background: "#fff", border: "1px solid #e2e8f0", borderTop: `4px solid ${accent}`,
-      borderRadius: 10, padding: "18px 20px", flex: 1, minWidth: 160,
-    }}>
-      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", margin: "6px 0 2px" }}>
+    <div className="rpt-summary-card" style={{ borderTopColor: accent }}>
+      <span className="rpt-summary-label">{label}</span>
+      <div className="rpt-summary-count">
         {count}
-        <span style={{ fontSize: 13, color: "#64748b", fontWeight: 400, marginLeft: 4 }}>tickets</span>
+        <span className="rpt-summary-unit">tickets</span>
       </div>
-      <div style={{ fontSize: 15, color: accent, fontWeight: 600 }}>{peso(total)}</div>
+      <div className="rpt-summary-total">{peso(total)}</div>
     </div>
   );
 }
 
-
-// ─── handle ──────────────────────────────────────────────────────────────
 export const handleDateChange = (field, value) => {
-    setFilters((prev) => {
-      const updated = { ...prev, [field]: value };
-      if (field === "endDate" && updated.startDate && value < updated.startDate) return prev;
-      if (field === "startDate" && updated.endDate && value > updated.endDate) updated.endDate = "";
-      return updated;
-    });
-  };
+  setFilters((prev) => {
+    const updated = { ...prev, [field]: value };
+    if (field === "endDate"   && updated.startDate && value < updated.startDate) return prev;
+    if (field === "startDate" && updated.endDate   && value > updated.endDate)   updated.endDate = "";
+    return updated;
+  });
+};
 
 export const handleClearFilter = () => {
-    setFilters({ startDate: "", endDate: "", batch: "all" });
-    setTimeout(() => fetchData(), 0);
-  };
+  setFilters({ startDate: "", endDate: "", batch: "all" });
+  setTimeout(() => fetchData(), 0);
+};
 
 export const handleExportCSV = () => {
-    exportCSV(
-      filteredCollections.map((r) => ({
-        Date: r.issued_at, Batch: r.batch, "Ticket ID": r.id,
-        Driver: r.driver, Vehicle: r.vehicle, Route: r.route,
-        "Amount (PHP)": (r.ticket_count || 1) * TICKET_FEE,
-      })),
-      `collection_report_${Date.now()}.csv`
-    );
-  };
+  exportCSV(
+    filteredCollections.map((r) => ({
+      Date: r.issued_at, Batch: r.batch, "Ticket ID": r.id,
+      Driver: r.driver, Vehicle: r.vehicle, Route: r.route,
+      "Amount (PHP)": (r.ticket_count || 1) * TICKET_FEE,
+    })),
+    `collection_report_${Date.now()}.csv`
+  );
+};
 
 export const handleExportLogsCSV = () => {
-    exportCSV(
-      logs.map((l) => ({
-        Timestamp: l.timestamp, "Ticket ID": l.ticket_id, Action: l.action,
-        Driver: l.driver, Vehicle: l.vehicle, Route: l.route,
-        Batch: l.batch, "Amount (PHP)": l.amount, User: l.user,
-      })),
-      `transaction_logs_${Date.now()}.csv`
-    );
-  };
+  exportCSV(
+    logs.map((l) => ({
+      Timestamp: l.timestamp, "Ticket ID": l.ticket_id, Action: l.action,
+      Driver: l.driver, Vehicle: l.vehicle, Route: l.route,
+      Batch: l.batch, "Amount (PHP)": l.amount, User: l.user,
+    })),
+    `transaction_logs_${Date.now()}.csv`
+  );
+};
 
 export const handleExportVehiclesCSV = () => {
-    exportCSV(
-      vehicles.map((v) => ({
-        Code: v.code, "Plate Number": v.plate_number,
-        Route: v.route_detail ? `${v.route_detail.origin} - San Fernando` : v.route,
-        Driver: v.active_driver_name || "—",
-      })),
-      `vehicle_records_${Date.now()}.csv`
-    );
-  };
+  exportCSV(
+    vehicles.map((v) => ({
+      Code: v.code, "Plate Number": v.plate_number,
+      Route: v.route_detail ? `${v.route_detail.origin} - San Fernando` : v.route,
+      Driver: v.active_driver_name || "—",
+    })),
+    `vehicle_records_${Date.now()}.csv`
+  );
+};
 
 export const handleExportDriversCSV = () => {
-    exportCSV(
-      drivers.map((d) => ({
-        Code: d.code, Name: d.name, "Contact Number": d.contact_number,
-      })),
-      `driver_records_${Date.now()}.csv`
-    );
-  };
+  exportCSV(
+    drivers.map((d) => ({
+      Code: d.code, Name: d.name, "Contact Number": d.contact_number,
+    })),
+    `driver_records_${Date.now()}.csv`
+  );
+};
 
 export const handleExportPDF = () => exportPDF(filteredCollections, filters);

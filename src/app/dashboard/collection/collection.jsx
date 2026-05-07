@@ -83,7 +83,7 @@ function collection() {
 
         {/* ── Right: Collection Log ── */}
         <div className="col-card col-log-card">
-          <div className="col-card-header col-card-header--navy col-log-header">
+          <div className="col-card-header col-card-header--gold col-log-header">
             <div>
               <span className="col-card-title">Collection Log</span>
               <p className="col-card-desc">Recent collections and verification status</p>

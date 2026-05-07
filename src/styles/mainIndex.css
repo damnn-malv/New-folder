@@ -15,6 +15,7 @@
 
   --text-primary:   #1a2744;
   --text-secondary: #1a2744;
+  --text-secondary-rp: #1a2744;
   --text-muted:     #1a2744;
   --text-label:     #1a2744;
 
@@ -34,6 +35,7 @@
 
   --text-primary:   #f4f5f8;
   --text-secondary: rgba(244, 245, 248, 0.6);
+  --text-secondary-rp: rgb(245, 245, 245);
   --text-muted:     rgb(250, 250, 250);
   --text-label:     rgba(255, 255, 255, 0.837);
 
