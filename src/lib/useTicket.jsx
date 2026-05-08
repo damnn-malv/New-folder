@@ -13,15 +13,29 @@ export const statusColor = {
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
 export const formatTime = (dateString) => {
-  try { return new Date(dateString).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }); }
-  catch { return "N/A"; }
+  try {
+    return new Date(dateString).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "N/A";
+  }
+};
+
+export const formatHour = (hour) => {
+  const suffix = hour >= 12 ? "pm" : "am";
+  const display = ((hour + 11) % 12) + 1; // convert to 12-hour
+  return `${display}${suffix}`;
 };
 
 // Returns the current batch ("Batch 1" | "Batch 2" | null)
 export const getCurrentBatch = () => {
   const hour = new Date().getHours();
-  if (hour >= SHIFTS.BATCH_1.startHour && hour < SHIFTS.BATCH_1.endHour) return SHIFTS.BATCH_1.name;
-  if (hour >= SHIFTS.BATCH_2.startHour && hour < SHIFTS.BATCH_2.endHour) return SHIFTS.BATCH_2.name;
+  if (hour >= SHIFTS.BATCH_1.startHour && hour < SHIFTS.BATCH_1.endHour)
+    return SHIFTS.BATCH_1.name;
+  if (hour >= SHIFTS.BATCH_2.startHour && hour < SHIFTS.BATCH_2.endHour)
+    return SHIFTS.BATCH_2.name;
   return null;
 };
 
@@ -32,7 +46,10 @@ export const hadBatch1TicketToday = (vehicleId, tickets) => {
     if (t.vehicle?.id !== vehicleId) return false;
     if (t.status === "CANCELLED") return false;
     const ticketDate = t.issued_at?.split("T")[0];
-    return ticketDate === todayStr && OperationsService.getShiftBatchName(t.issued_at) === SHIFTS.BATCH_1.name;
+    return (
+      ticketDate === todayStr &&
+      OperationsService.getShiftBatchName(t.issued_at) === SHIFTS.BATCH_1.name
+    );
   });
 };
 
@@ -59,23 +76,34 @@ export function useTicket() {
     try {
       setLoading(true);
       setTickets(await apiService.getTickets());
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchVehicles = async () => {
-    try { setVehicles(await apiService.getVehicles()); } catch { /* silent */ }
+    try {
+      setVehicles(await apiService.getVehicles());
+    } catch {
+      /* silent */
+    }
   };
 
   const fetchDrivers = async () => {
-    try { setDrivers(await apiService.getDrivers()); } catch { /* silent */ }
+    try {
+      setDrivers(await apiService.getDrivers());
+    } catch {
+      /* silent */
+    }
   };
 
   // Initial fetch
-  useEffect(() => { 
-    fetchTickets(); 
-    fetchVehicles(); 
-    fetchDrivers(); 
+  useEffect(() => {
+    fetchTickets();
+    fetchVehicles();
+    fetchDrivers();
   }, []);
 
   // Filter and sort tickets based on search term
@@ -83,15 +111,16 @@ export function useTicket() {
     const filtered = tickets.filter(
       (t) =>
         t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.vehicle?.plate_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.driver?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+        (t.vehicle?.plate_number || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (t.driver?.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const sorted = filtered.sort((a, b) => 
-      new Date(b.issued_at) - new Date(a.issued_at)
+    const sorted = filtered.sort(
+      (a, b) => new Date(b.issued_at) - new Date(a.issued_at),
     );
     setFilteredTickets(sorted.slice(0, 10));
   }, [searchTerm, tickets]);
-
 
   // Vehicle change handler
   const handleVehicleChange = (e) => {
@@ -102,7 +131,9 @@ export function useTicket() {
     setOverrideMissedBatch(false);
     setIssueError("");
     if (vehicle?.active_driver) {
-      setSelectedDriver(drivers.find((d) => d.id === vehicle.active_driver) || null);
+      setSelectedDriver(
+        drivers.find((d) => d.id === vehicle.active_driver) || null,
+      );
     } else {
       setSelectedDriver(null);
     }
@@ -120,8 +151,14 @@ export function useTicket() {
     setIssueError("");
     setMissedBatchWarning("");
 
-    if (!selectedVehicle) { setIssueError("Please select a vehicle."); return; }
-    if (!selectedDriver) { setIssueError("Please select a driver."); return; }
+    if (!selectedVehicle) {
+      setIssueError("Please select a vehicle.");
+      return;
+    }
+    if (!selectedDriver) {
+      setIssueError("Please select a driver.");
+      return;
+    }
 
     // Batch window check
     const currentBatch = getCurrentBatch();
@@ -131,16 +168,19 @@ export function useTicket() {
       setIssueError(
         tooEarly
           ? `Ticket issuance hasn't opened yet. Batch 1 starts at ${SHIFTS.BATCH_1.startHour}:00 AM.`
-          : `Ticket issuance is closed. Operations end at ${SHIFTS.BATCH_2.endHour}:00 PM.`
+          : `Ticket issuance is closed. Operations end at ${SHIFTS.BATCH_2.endHour}:00 PM.`,
       );
       return;
     }
 
     // Missed Batch 1 check
-    if (currentBatch === SHIFTS.BATCH_2.name && !hadBatch1TicketToday(selectedVehicle.id, tickets)) {
+    if (
+      currentBatch === SHIFTS.BATCH_2.name &&
+      !hadBatch1TicketToday(selectedVehicle.id, tickets)
+    ) {
       if (!missedBatchWarning) {
         setMissedBatchWarning(
-          `Check the box below if this is a late issuance so it is recorded under Batch 1.`
+          `Check the box below if this is a late issuance so it is recorded under Batch 1.`,
         );
         return;
       }
@@ -148,17 +188,23 @@ export function useTicket() {
 
     // Vehicle must be AVAILABLE
     if (selectedVehicle.status !== "AVAILABLE") {
-      setIssueError(`Vehicle is currently ${selectedVehicle.status} and cannot be ticketed.`); return;
+      setIssueError(
+        `Vehicle is currently ${selectedVehicle.status} and cannot be ticketed.`,
+      );
+      return;
     }
     // Driver must be ACTIVE
     if (selectedDriver.status !== "ACTIVE") {
-      setIssueError("Selected driver is not active and cannot be assigned."); return;
+      setIssueError("Selected driver is not active and cannot be assigned.");
+      return;
     }
     if (OperationsService.isVehicleBusy(selectedVehicle.id, tickets)) {
-      setIssueError("This vehicle already has an active ticket."); return;
+      setIssueError("This vehicle already has an active ticket.");
+      return;
     }
     if (OperationsService.isDriverBusy(selectedDriver.id, tickets, vehicles)) {
-      setIssueError("This driver is already assigned to an active ticket."); return;
+      setIssueError("This driver is already assigned to an active ticket.");
+      return;
     }
 
     try {
@@ -187,20 +233,30 @@ export function useTicket() {
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
       setIssueError(err.message || "Error issuing ticket");
-    } finally { setIssuingTicket(false); }
+    } finally {
+      setIssuingTicket(false);
+    }
   };
 
   // Computed values
-  const availableVehicles = useMemo(() => 
-    vehicles.filter(
-      (v) => v.status === "AVAILABLE" && !OperationsService.isVehicleBusy(v.id, tickets)
-    ), [vehicles, tickets]
+  const availableVehicles = useMemo(
+    () =>
+      vehicles.filter(
+        (v) =>
+          v.status === "AVAILABLE" &&
+          !OperationsService.isVehicleBusy(v.id, tickets),
+      ),
+    [vehicles, tickets],
   );
 
-  const activeDrivers = useMemo(() => 
-    drivers.filter(
-      (d) => d.status === "ACTIVE" && !OperationsService.isDriverBusy(d.id, tickets, vehicles)
-    ), [drivers, tickets, vehicles]
+  const activeDrivers = useMemo(
+    () =>
+      drivers.filter(
+        (d) =>
+          d.status === "ACTIVE" &&
+          !OperationsService.isDriverBusy(d.id, tickets, vehicles),
+      ),
+    [drivers, tickets, vehicles],
   );
 
   return {

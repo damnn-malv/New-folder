@@ -303,7 +303,7 @@ def public_queue(request):
 
     return Response(data)
 
-
+# if nag loloko date sa current device, no need another call kung gumagana maayos date
 @api_view(['GET'])
 def server_time(request):
     """Return current server time in ISO format"""

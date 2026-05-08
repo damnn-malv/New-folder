@@ -10,12 +10,21 @@ export function useCollection() {
   const [batchStats, setBatchStats] = useState(null);
   const [verifyingBatch, setVerifyingBatch] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  const [serverTime, setServerTime] = useState(null);
-  const [verifiedBatches, setVerifiedBatches] = useState({ batch1: null, batch2: null });
+  const [verifiedBatches, setVerifiedBatches] = useState({
+    batch1: null,
+    batch2: null,
+  });
 
   const STORAGE_KEY = "batch_verifications";
 
-  const getTodayDateString = (date) => date.toISOString().split('T')[0];
+  const getTodayDateString = (date) => date.toISOString().split("T")[0];
+  const isTodayTicket = (ticket) => {
+    if (!ticket?.issued_at) return false;
+    return (
+      getTodayDateString(new Date(ticket.issued_at)) ===
+      getTodayDateString(new Date())
+    );
+  };
 
   const loadVerifiedBatches = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -25,32 +34,28 @@ export function useCollection() {
       // Reset if date changed
       if (parsed.date !== today) {
         setVerifiedBatches({ batch1: null, batch2: null });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, batch1: null, batch2: null }));
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ date: today, batch1: null, batch2: null }),
+        );
       } else {
         setVerifiedBatches({ batch1: parsed.batch1, batch2: parsed.batch2 });
       }
     } else {
       const today = getTodayDateString(new Date());
       setVerifiedBatches({ batch1: null, batch2: null });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, batch1: null, batch2: null }));
-    }
-  };
-
-  const fetchServerTime = async () => {
-    try {
-      const data = await apiService.getServerTime();
-      setServerTime(new Date(data.time));
-    } catch (err) {
-      // Fallback to client time if server time fails
-      setServerTime(new Date());
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ date: today, batch1: null, batch2: null }),
+      );
     }
   };
 
   const isBatchVerifiable = (batchKey) => {
-    if (!serverTime) return false;
-    const hour = serverTime.getHours();
+    const now = new Date();
+    const hour = now.getHours();
     const verifiedDate = verifiedBatches[batchKey.toLowerCase()];
-    const today = getTodayDateString(serverTime);
+    const today = getTodayDateString(now);
 
     if (verifiedDate === today) return false; // Already verified today
 
@@ -64,7 +69,6 @@ export function useCollection() {
 
   useEffect(() => {
     loadVerifiedBatches();
-    fetchServerTime();
     fetchTickets();
   }, []);
 
@@ -72,7 +76,7 @@ export function useCollection() {
     try {
       setLoading(true);
       const data = await apiService.getTickets();
-      setTickets(data);
+      setTickets(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -81,25 +85,30 @@ export function useCollection() {
     }
   };
 
+  const todaysTickets = useMemo(() => tickets.filter(isTodayTicket), [tickets]);
+
   useEffect(() => {
-    if (tickets.length > 0) {
-      setBatchStats(OperationsService.calculateBatchStats(tickets));
+    if (todaysTickets.length > 0) {
+      setBatchStats(OperationsService.calculateBatchStats(todaysTickets));
     } else {
       setBatchStats(null);
     }
-  }, [tickets]);
+  }, [todaysTickets]);
 
   const safeLower = (val) => String(val ?? "").toLowerCase();
 
   const filteredTickets = useMemo(() => {
     const term = safeLower(searchTerm);
-    const filtered = tickets.filter((t) =>
-      safeLower(t.id).includes(term) ||
-      safeLower(t.vehicle?.plate_number).includes(term) ||
-      safeLower(t.driver?.name).includes(term) ||
-      safeLower(t.vehicle?.route_detail?.full_name).includes(term)
+    const filtered = tickets.filter(
+      (t) =>
+        safeLower(t.id).includes(term) ||
+        safeLower(t.vehicle?.plate_number).includes(term) ||
+        safeLower(t.driver?.name).includes(term) ||
+        safeLower(t.vehicle?.route_detail?.full_name).includes(term),
     );
-    return filtered.sort((a, b) => new Date(b.issued_at) - new Date(a.issued_at));
+    return filtered.sort(
+      (a, b) => new Date(b.issued_at) - new Date(a.issued_at),
+    );
   }, [searchTerm, tickets]);
 
   const handleVerifyBatch = async (batchName) => {
@@ -107,9 +116,10 @@ export function useCollection() {
       setVerifyingBatch(batchName);
       const batchTickets = tickets.filter(
         (t) =>
+          isTodayTicket(t) &&
           !t.is_verified &&
           t.status !== "CANCELLED" &&
-          OperationsService.getEffectiveBatchName(t) === batchName
+          OperationsService.getEffectiveBatchName(t) === batchName,
       );
 
       if (batchTickets.length === 0) {
@@ -120,47 +130,33 @@ export function useCollection() {
       }
 
       for (const ticket of batchTickets) {
-        await apiService.patch(`/tickets/${ticket.id}/`, { is_verified: true });
+        await apiService.patch(`/tickets/${ticket.id}/`, {
+          is_verified: true,
+          status: "COLLECTED",
+        });
       }
 
       // Mark batch as verified today
-      const today = getTodayDateString(serverTime || new Date());
-      const updated = { ...verifiedBatches, [batchName.toLowerCase().replace(' ', '')]: today };
+      const today = getTodayDateString(new Date());
+      const updated = {
+        ...verifiedBatches,
+        [batchName.toLowerCase().replace(" ", "")]: today,
+      };
       setVerifiedBatches(updated);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, ...updated }));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ date: today, ...updated }),
+      );
 
-      setSuccessMessage(`${batchTickets.length} ticket(s) in ${batchName} verified successfully.`);
+      setSuccessMessage(
+        `${batchTickets.length} ticket(s) in ${batchName} verified successfully.`,
+      );
       setTimeout(() => setSuccessMessage(""), 3000);
       fetchTickets();
     } catch (err) {
       setError(err.message);
     } finally {
       setVerifyingBatch(null);
-    }
-  };
-
-  const handleResetAmount = async (ticketId = null) => {
-    try {
-      if (!ticketId) {
-        const verifiedTickets = tickets.filter((t) => t.is_verified && t.status !== "COLLECTED");
-        for (const ticket of verifiedTickets) {
-          await apiService.patch(`/tickets/${ticket.id}/`, {
-            collection_amount: 0,
-            status: "COLLECTED",
-          });
-        }
-        setSuccessMessage(`${verifiedTickets.length} ticket(s) collected and recorded successfully.`);
-      } else {
-        await apiService.patch(`/tickets/${ticketId}/`, {
-          collection_amount: 0,
-          status: "COLLECTED",
-        });
-        setSuccessMessage(`Ticket ${ticketId} marked as collected.`);
-      }
-      fetchTickets();
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
-      setError(err.message);
     }
   };
 
@@ -181,7 +177,6 @@ export function useCollection() {
     setSuccessMessage,
     fetchTickets,
     handleVerifyBatch,
-    handleResetAmount,
     clearSuccessMessage,
     clearError,
     isBatchVerifiable,
@@ -200,9 +195,18 @@ export const formatTime = (dateString) => {
 };
 
 export const formatCurrency = (amount) =>
-  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount || 0);
+  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
+    amount || 0,
+  );
 
-export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch, isVerifiable }) => (
+export const BatchCard = ({
+  label,
+  stats,
+  batchKey,
+  onVerify,
+  verifyingBatch,
+  isVerifiable,
+}) => (
   <div className="bc-card">
     <div className="bc-header">
       <span className="bc-label">{label}</span>
@@ -211,13 +215,25 @@ export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch, is
       {stats && (
         <div className="bc-rows">
           {[
-            { label: "Revenue",              value: formatCurrency(stats.total), bold: true },
-            { label: "Active Dispatches",    value: stats.count },
-            { label: "Pending Verification", value: stats.pending, warn: stats.pending > 0 },
+            {
+              label: "Revenue",
+              value: formatCurrency(stats.total),
+              bold: true,
+            },
+            { label: "Active Dispatches", value: stats.count },
+            {
+              label: "Pending Verification",
+              value: stats.pending,
+              warn: stats.pending > 0,
+            },
           ].map(({ label: l, value, warn }) => (
             <div key={l} className="bc-row">
               <span className="bc-row-label">{l}</span>
-              <span className={`bc-row-value ${warn ? "bc-row-value--warn" : ""}`}>{value}</span>
+              <span
+                className={`bc-row-value ${warn ? "bc-row-value--warn" : ""}`}
+              >
+                {value}
+              </span>
             </div>
           ))}
         </div>
@@ -235,16 +251,32 @@ export const BatchCard = ({ label, stats, batchKey, onVerify, verifyingBatch, is
           </>
         ) : !isVerifiable ? (
           <>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             Not Available
           </>
         ) : (
           <>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
             Verify {batchKey}
           </>

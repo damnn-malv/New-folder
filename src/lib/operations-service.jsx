@@ -19,6 +19,7 @@ export const OperationsService = {
     return "Other";
   },
 
+  //filter para ticketing
   isDriverBusy(driverId, tickets, vehicles) {
     const hasActiveTicket = tickets.some(
       (t) => t.driver?.id === driverId && t.status === "ISSUED",
@@ -55,12 +56,12 @@ export const OperationsService = {
     return {
       batch1: {
         total: b1.reduce((sum, t) => sum + Number(t.collection_amount || 0), 0),
-        count: b1.filter(t => t.status !== "COLLECTED").length,
+        count: b1.filter((t) => t.status !== "COLLECTED").length,
         pending: b1.filter((t) => !t.is_verified).length,
       },
       batch2: {
         total: b2.reduce((sum, t) => sum + Number(t.collection_amount || 0), 0),
-        count: b2.filter(t => t.status !== "COLLECTED").length,
+        count: b2.filter((t) => t.status !== "COLLECTED").length,
         pending: b2.filter((t) => !t.is_verified).length,
       },
       totalVerified: activeTickets
