@@ -60,7 +60,7 @@ export const handleExportCSV = () => {
     filteredCollections.map((r) => ({
       Date: r.issued_at, Batch: r.batch, "Ticket ID": r.id,
       Driver: r.driver, Vehicle: r.vehicle, Route: r.route,
-      "Amount (PHP)": (r.ticket_count || 1) * TICKET_FEE,
+      "Amount (PHP)": r.amount || 0,
     })),
     `collection_report_${Date.now()}.csv`
   );

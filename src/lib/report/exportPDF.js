@@ -22,7 +22,7 @@ export function exportPDF(collections, filters) {
     filters.endDate ? `Until ${filters.endDate}` : "All Time";
 
   const now = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
-  const totalAmt = collections.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0);
+  const totalAmt = collections.reduce((s, r) => s + (r.amount || 0), 0);
 
   // Group by date then by batch for receipt rows
   const byDate = {};
@@ -36,11 +36,11 @@ export function exportPDF(collections, filters) {
   const receiptRows = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, batches]) => {
     let rows = "";
     if (batches.batch1.length > 0) {
-      const total = batches.batch1.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0);
+      const total = batches.batch1.reduce((s, r) => s + (r.amount || 0), 0);
       rows += `<tr><td>${date}</td><td>Batch 1 (AM)</td><td style="text-align:center">${batches.batch1.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
     }
     if (batches.batch2.length > 0) {
-      const total = batches.batch2.reduce((s, r) => s + (r.ticket_count || 1) * TICKET_FEE, 0);
+      const total = batches.batch2.reduce((s, r) => s + (r.amount || 0), 0);
       rows += `<tr><td>${date}</td><td>Batch 2 (PM)</td><td style="text-align:center">${batches.batch2.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
     }
     return rows;

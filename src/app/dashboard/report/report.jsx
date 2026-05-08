@@ -125,7 +125,7 @@ export default function Report() {
       filteredCollections.map((r) => ({
         Date: r.issued_at, Batch: r.batch, "Ticket ID": r.id,
         Driver: r.driver, Vehicle: r.vehicle, Route: r.route,
-        "Amount (PHP)": (r.ticket_count || 1) * TICKET_FEE,
+        "Amount (PHP)": r.amount || 0,
       })),
       `collection_report_${Date.now()}.csv`
     );
@@ -220,16 +220,16 @@ export default function Report() {
 
       {/* Summary Cards */}
       <div className="rpt-summary-row">
-        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={(summary?.batch1?.count ?? 0) * TICKET_FEE} accent="#c9a84c" />
-        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={(summary?.batch2?.count ?? 0) * TICKET_FEE} accent="#c9a84c" />
-        <SummaryCard label="Today"        count={summary?.today?.count  ?? 0} total={(summary?.today?.count  ?? 0) * TICKET_FEE} accent="#c9a84c" />
+        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={summary?.batch1?.total ?? 0} accent="#c9a84c" />
+        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={summary?.batch2?.total ?? 0} accent="#c9a84c" />
+        <SummaryCard label="Today"        count={summary?.today?.count  ?? 0} total={summary?.today?.total  ?? 0} accent="#c9a84c" />
         <div className="rpt-grand-card">
           <span className="rpt-grand-label">Grand Total</span>
           <div className="rpt-grand-count">
             {summary?.total_tickets ?? 0}
             <span className="rpt-grand-unit">tickets</span>
           </div>
-          <div className="rpt-grand-amount">{peso((summary?.total_tickets ?? 0) * TICKET_FEE)}</div>
+          <div className="rpt-grand-amount">{peso(summary?.total_amount ?? 0)}</div>
         </div>
       </div>
 
