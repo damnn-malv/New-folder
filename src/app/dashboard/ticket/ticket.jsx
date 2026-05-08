@@ -50,7 +50,7 @@ function Ticket() {
       <div className="ticket-grid">
         {/* ── Issue Ticket Card ── */}
         <div className="ticket-card">
-          <div className="ticket-card-header ticket-card-header--gold">
+          <div className="ticket-card-header ticket-card-header--color">
             <span className="ticket-card-title">Issue New Ticket</span>
             <p className="ticket-card-desc">
               Only available vehicles and active drivers may be selected.
@@ -229,7 +229,7 @@ function Ticket() {
           </div>
           {/* ── Late Issue Ticket Card ── */}
           <div className="ticket-card ticket-card--full">
-            <div className="ticket-card-header ticket-card-header--gold">
+            <div className="ticket-card-header ticket-card-header--color">
               <span className="ticket-card-title">Late Issue Ticket</span>
               <p className="ticket-card-desc">
                 Issue tickets for past dates with batch selection
@@ -267,7 +267,7 @@ function Ticket() {
 
         {/* ── Recent Tickets Card ── */}
         <div className="ticket-card">
-          <div className="ticket-card-header ticket-card-header--gold">
+          <div className="ticket-card-header ticket-card-header--color">
             <div>
               <span className="ticket-card-title">Recent Tickets</span>
               <p className="ticket-card-desc">Last 10 issued tickets</p>

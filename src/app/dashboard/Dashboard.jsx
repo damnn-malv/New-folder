@@ -59,9 +59,14 @@ export default function Dashboard() {
     <div className="dashboard-page">
 
       {/* Header */}
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">Dashboard</h1>
-        <p className="dashboard-subtitle">Overview of today's operations and collections.</p>
+      <div className="col-header">
+        <div className="col-header-left">
+          <div className="col-header-accent" />
+            <div>
+              <h1 className="col-title">Dashboard</h1>
+              <p className="col-subtitle">Overview of today's collection and activity</p>
+            </div>
+        </div>
       </div>
 
       {error && <div className="dashboard-error">{error}</div>}

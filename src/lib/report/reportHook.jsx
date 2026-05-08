@@ -28,9 +28,9 @@ export function exportCSV(data, filename = "report.csv") {
   URL.revokeObjectURL(url);
 }
 
-export function SummaryCard({ label, count, total, accent }) {
+export function SummaryCard({ label, count, total }) {
   return (
-    <div className="rpt-summary-card" style={{ borderTopColor: accent }}>
+    <div className="rpt-summary-card">
       <span className="rpt-summary-label">{label}</span>
       <div className="rpt-summary-count">
         {count}

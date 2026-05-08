@@ -30,10 +30,13 @@
   width: 4px;
   height: 36px;
   border-radius: 4px;
-  background: var(--gold);
+  background: var(--navy);
   flex-shrink: 0;
 }
 
+.dark .veh-header-accent {
+  background: var(--gold);
+}
 .veh-title {
   font-size: 22px;
   font-weight: 700;

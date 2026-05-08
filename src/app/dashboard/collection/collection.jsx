@@ -31,10 +31,10 @@ function Collection() {
       <div className="col-header">
         <div className="col-header-left">
           <div className="col-header-accent" />
-          <div>
-            <h1 className="col-title">Tally &amp; Collections</h1>
-            <p className="col-subtitle">Automated revenue recording — ₱10 per dispatch</p>
-          </div>
+            <div>
+              <h1 className="col-title">Tally &amp; Collections</h1>
+              <p className="col-subtitle">Automated revenue recording — ₱10 per dispatch</p>
+            </div>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ function Collection() {
 
         {/* ── Right: Collection Log ── */}
         <div className="col-card col-log-card">
-          <div className="col-card-header col-card-header--gold col-log-header">
+          <div className="col-card-header col-card-header--color col-log-header">
             <div>
               <span className="col-card-title">Collection Log</span>
               <p className="col-card-desc">Recent collections and verification status</p>

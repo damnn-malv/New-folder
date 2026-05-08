@@ -220,9 +220,9 @@ export default function Report() {
 
       {/* Summary Cards */}
       <div className="rpt-summary-row">
-        <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={summary?.batch1?.total ?? 0} accent="#c9a84c" />
-        <SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={summary?.batch2?.total ?? 0} accent="#c9a84c" />
-        <SummaryCard label="Today"        count={summary?.today?.count  ?? 0} total={summary?.today?.total  ?? 0} accent="#c9a84c" />
+       <SummaryCard label="Batch 1 (AM)" count={summary?.batch1?.count ?? 0} total={summary?.batch1?.total ?? 0}  />
+<SummaryCard label="Batch 2 (PM)" count={summary?.batch2?.count ?? 0} total={summary?.batch2?.total ?? 0}  />
+<SummaryCard label="Today"        count={summary?.today?.count  ?? 0} total={summary?.today?.total  ?? 0}  />
         <div className="rpt-grand-card">
           <span className="rpt-grand-label">Grand Total</span>
           <div className="rpt-grand-count">

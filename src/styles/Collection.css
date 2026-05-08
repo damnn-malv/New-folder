@@ -30,8 +30,12 @@
   width: 4px;
   height: 36px;
   border-radius: 4px;
-  background: var(--gold);
+  background: var(--navy);
   flex-shrink: 0;
+}
+
+.dark .col-header-accent {
+  background: var(--gold);
 }
 
 .col-title {
@@ -105,8 +109,13 @@
   border-left: 4px solid transparent;
 }
 
-.col-card-header--navy { border-left-color: #1a2744; }
-.col-card-header--gold { border-left-color: var(--gold); }
+.col-card-header--color { 
+  border-left-color: var(--navy);
+ }
+
+ .dark .col-card-header--color { 
+  border-left-color: var(--gold);
+ }
 
 .col-card-body { padding: 16px 20px; }
 .col-card-body--tight { padding: 14px 20px; }

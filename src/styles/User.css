@@ -30,8 +30,12 @@
   width: 4px;
   height: 36px;
   border-radius: 4px;
-  background: var(--gold);
+  background: var(--navy);
   flex-shrink: 0;
+}
+
+.dark .usr-header-accent {
+  background: var(--gold);
 }
 
 .usr-title {

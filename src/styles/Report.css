@@ -29,8 +29,12 @@
   width: 4px;
   height: 36px;
   border-radius: 4px;
-  background: var(--gold);
+  background: var(--navy);
   flex-shrink: 0;
+}
+
+.dark .rpt-header-accent { 
+  background: var(--gold); 
 }
 
 .rpt-title {
@@ -192,7 +196,7 @@
 .rpt-summary-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-top: 4px solid transparent;
+  border-top: 4px solid #1a2744;  /* navy in light mode */
   border-radius: 12px;
   padding: 18px 20px;
   box-shadow: var(--shadow-sm);
@@ -200,6 +204,10 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.dark .rpt-summary-card {
+  border-top-color: var(--gold);  /* gold in dark mode */
 }
 
 .rpt-summary-label {
@@ -229,7 +237,11 @@
 .rpt-summary-total {
   font-size: 15px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--navy);         /* light mode */
+}
+
+.dark .rpt-summary-total {
+  color: var(--gold);             /* dark mode */
 }
 
 /* Grand Total card */

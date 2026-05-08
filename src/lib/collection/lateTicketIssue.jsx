@@ -3,13 +3,13 @@ import { apiService } from "../api-service";
 import { SHIFTS } from "../constants";
 
 const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
-  const [lateDate, setLateDate] = useState("");
-  const [lateBatch, setLateBatch] = useState("");
+  const [lateDate, setLateDate]           = useState("");
+  const [lateBatch, setLateBatch]         = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [selectedDriver, setSelectedDriver] = useState(null);
+  const [selectedDriver, setSelectedDriver]   = useState(null);
 
-  const handleDateChange = (e) => setLateDate(e.target.value);
-  const handleBatchChange = (e) => setLateBatch(e.target.value);
+  const handleDateChange    = (e) => setLateDate(e.target.value);
+  const handleBatchChange   = (e) => setLateBatch(e.target.value);
   const handleVehicleChange = (e) => {
     const vehicle = vehicles.find((v) => v.id === parseInt(e.target.value));
     setSelectedVehicle(vehicle);
@@ -24,34 +24,23 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
       alert("Please fill all fields");
       return;
     }
-
-    if (
-      !selectedVehicle.route_detail?.full_name &&
-      !selectedVehicle.full_name
-    ) {
+    if (!selectedVehicle.route_detail?.full_name && !selectedVehicle.full_name) {
       alert("Selected vehicle does not have a valid route assigned");
       return;
     }
-
     const payload = {
       vehicle: selectedVehicle.id,
       driver: selectedDriver.id,
-      route:
-        selectedVehicle.route_detail?.full_name ||
-        selectedVehicle.full_name ||
-        "",
+      route: selectedVehicle.route_detail?.full_name || selectedVehicle.full_name || "",
       status: "ISSUED",
       is_late: true,
       intended_batch: lateBatch,
       issued_at: new Date(lateDate).toISOString(),
     };
-
     try {
-      const response = await apiService.post("/tickets/late/", payload);
-
+      await apiService.post("/tickets/late/", payload);
       alert("Late ticket issued successfully!");
     } catch (error) {
-      // If backend returned validation errors, show them
       if (error.response && error.response.data) {
         alert("Server rejected fields: " + JSON.stringify(error.response.data));
       } else {
@@ -61,97 +50,103 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
   };
 
   const formatHour = (hour) => {
-    const suffix = hour >= 12 ? "pm" : "am";
-    const display = ((hour + 11) % 12) + 1; // convert to 12-hour
+    const suffix  = hour >= 12 ? "pm" : "am";
+    const display = ((hour + 11) % 12) + 1;
     return `${display}${suffix}`;
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Issue Late Ticket
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Enter details for the late ticket
-              </p>
-            </div>
-            <button
-              onClick={onClose, () => window.location.reload()}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
+    <div className="ticket-overlay" onClick={(onClose, () => window.location.reload())}>
+      <div className="ticket-modal" onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="ticket-modal-header">
+          <div className="ticket-modal-header-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+              <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+            </svg>
+            <h2 className="ticket-modal-title">Issue Late Ticket</h2>
           </div>
+          <button
+            className="ticket-modal-close"
+            onClick={(onClose, () => window.location.reload())}
+            aria-label="Close"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Date
-            </label>
+        {/* Body */}
+        <div className="ticket-modal-body">
+
+          {/* Late issuance notice */}
+          <div className="ticket-warning" style={{ marginBottom: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ticket-warning-icon">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <path d="M12 9v4"/><path d="M12 17h.01"/>
+            </svg>
+            <div className="ticket-warning-body">
+              <span className="ticket-warning-msg">
+                This ticket will be recorded as a late issuance for a past date.
+              </span>
+            </div>
+          </div>
+
+          {/* Date */}
+          <div className="ticket-field">
+            <label className="ticket-label">Date</label>
             <input
               type="date"
+              className="ticket-select"
               value={lateDate}
               onChange={handleDateChange}
               max={new Date().toISOString().split("T")[0]}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Batch
-            </label>
-            <select
-              value={lateBatch}
-              onChange={handleBatchChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-            >
-              <option value="">Select Batch</option>
+          {/* Batch */}
+          <div className="ticket-field">
+            <label className="ticket-label">Batch</label>
+            <select className="ticket-select" value={lateBatch} onChange={handleBatchChange}>
+              <option value="">— Select Batch —</option>
               <option value={SHIFTS.BATCH_1.name}>
-                {SHIFTS.BATCH_1.name} ({formatHour(SHIFTS.BATCH_1.startHour)}–
-                {formatHour(SHIFTS.BATCH_1.endHour)})
+                {SHIFTS.BATCH_1.name} ({formatHour(SHIFTS.BATCH_1.startHour)}–{formatHour(SHIFTS.BATCH_1.endHour)})
               </option>
               <option value={SHIFTS.BATCH_2.name}>
-                {SHIFTS.BATCH_2.name} ({formatHour(SHIFTS.BATCH_2.startHour)}–
-                {formatHour(SHIFTS.BATCH_2.endHour)})
+                {SHIFTS.BATCH_2.name} ({formatHour(SHIFTS.BATCH_2.startHour)}–{formatHour(SHIFTS.BATCH_2.endHour)})
               </option>
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Vehicle
-            </label>
+          {/* Vehicle */}
+          <div className="ticket-field">
+            <label className="ticket-label">Vehicle</label>
             <select
+              className="ticket-select"
               value={selectedVehicle?.id || ""}
               onChange={handleVehicleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
             >
-              <option value="">Select Vehicle</option>
+              <option value="">— Select Vehicle —</option>
               {vehicles.map((vehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.plate_number} -{" "}
-                  {vehicle.route_detail?.full_name || "N/A"}
+                  {vehicle.plate_number} — {vehicle.route_detail?.full_name || "N/A"}
                 </option>
               ))}
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Driver
-            </label>
+          {/* Driver */}
+          <div className="ticket-field">
+            <label className="ticket-label">Driver</label>
             <select
+              className="ticket-select"
               value={selectedDriver?.id || ""}
               onChange={handleDriverChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
             >
-              <option value="">Select Driver</option>
+              <option value="">— Select Driver —</option>
               {drivers.map((driver) => (
                 <option key={driver.id} value={driver.id}>
                   {driver.name}
@@ -159,22 +154,31 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
               ))}
             </select>
           </div>
+
         </div>
 
-        <div className="p-4 border-t border-gray-200 flex justify-end space-x-2">
+        {/* Footer */}
+        <div className="ticket-modal-footer">
           <button
-            onClick={onClose, () => window.location.reload()}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+            type="button"
+            className="ticket-modal-btn ticket-modal-btn--cancel"
+            onClick={(onClose, () => window.location.reload())}
           >
-            Close
+            Cancel
           </button>
           <button
+            type="button"
+            className="ticket-modal-btn ticket-modal-btn--submit"
             onClick={handleIssueLateTicket}
-            className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+              <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+            </svg>
             Issue Ticket
           </button>
         </div>
+
       </div>
     </div>
   );
