@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useCollection, formatTime, formatCurrency, BatchCard } from "../../../lib/useCollection";
+import { useCollection, formatTime, BatchCard } from "../../../lib/useCollection";
 import { OperationsService } from "../../../lib/operations-service";
 import "../../../styles/Collection.css";
 
-function collection() {
+function Collection() {
   const {
     filteredTickets,
     searchTerm,
@@ -14,7 +14,6 @@ function collection() {
     successMessage,
     setSearchTerm,
     handleVerifyBatch,
-    handleResetAmount,
     isBatchVerifiable,
   } = useCollection();
 
@@ -202,4 +201,4 @@ function collection() {
   );
 }
 
-export default collection;
+export default Collection;

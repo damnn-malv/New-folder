@@ -23,12 +23,6 @@ export const formatTime = (dateString) => {
   }
 };
 
-export const formatHour = (hour) => {
-  const suffix = hour >= 12 ? "pm" : "am";
-  const display = ((hour + 11) % 12) + 1; // convert to 12-hour
-  return `${display}${suffix}`;
-};
-
 // Returns the current batch ("Batch 1" | "Batch 2" | null)
 export const getCurrentBatch = () => {
   const hour = new Date().getHours();

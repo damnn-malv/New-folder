@@ -1,10 +1,6 @@
-import React from "react";
-import {
-  useTicket,
-  statusColor,
-  formatTime,
-  formatHour,
-} from "../../../lib/useTicket";
+import React, { useState } from "react";
+import { useTicket, statusColor, formatTime } from "../../../lib/useTicket";
+import LateTicketIssue from "../../../lib/collection/lateTicketIssue";
 import "../../../styles/Ticket.css";
 import { SHIFTS } from "../../../lib/constants";
 
@@ -33,6 +29,8 @@ function Ticket() {
     handleDriverChange,
     handleIssueTicket,
   } = useTicket();
+
+  const [isLateTicketModalOpen, setIsLateTicketModalOpen] = useState(false);
 
   return (
     <div className="ticket-page">
@@ -239,121 +237,29 @@ function Ticket() {
             </div>
 
             <div className="ticket-card-body">
-              <div className="ticket-field">
-                <label className="ticket-label">Issuance Date</label>
-                <input type="date" className="ticket-select" />
-              </div>
-
-              <div className="ticket-field">
-                <label className="ticket-label">Batch</label>
-                <select className="ticket-select">
-                  <option>
-                    {SHIFTS.BATCH_1.name} (
-                    {formatHour(SHIFTS.BATCH_1.startHour)}–
-                    {formatHour(SHIFTS.BATCH_1.endHour)})
-                  </option>
-                  <option>
-                    {SHIFTS.BATCH_2.name} (
-                    {formatHour(SHIFTS.BATCH_2.startHour)}–
-                    {formatHour(SHIFTS.BATCH_2.endHour)})
-                  </option>
-                </select>
-              </div>
-
-              <div className="ticket-field">
-                <label className="ticket-label">Vehicle (Plate Number)</label>
-                <select
-                  className="ticket-select"
-                  value={selectedVehicle?.id || ""}
-                  onChange={handleVehicleChange}
+              <p className="ticket-card-desc" style={{ marginBottom: "1rem" }}>
+                Use this form to issue tickets for past dates. Select the date,
+                batch, vehicle, and driver to create a late ticket record.
+              </p>
+              <button
+                type="button"
+                className="ticket-issue-btn"
+                onClick={() => setIsLateTicketModalOpen(true)}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
                 >
-                  <option value="">— Select a vehicle —</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.plate_number}
-                      {v.route_detail ? ` — ${v.route_detail.full_name}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Driver panel */}
-              {selectedVehicle && (
-                <div className="ticket-driver-panel">
-                  <div className="ticket-driver-panel-top">
-                    <span className="ticket-label">Assigned Driver</span>
-                    <button
-                      type="button"
-                      className="ticket-change-btn"
-                      onClick={() => setShowDriverModal(!showDriverModal)}
-                    >
-                      {showDriverModal ? "Close" : "Change Driver"}
-                    </button>
-                  </div>
-
-                  {selectedDriver ? (
-                    <div className="ticket-driver-info">
-                      <div className="ticket-driver-avatar">
-                        {selectedDriver.name.charAt(0)}
-                      </div>
-                      <div className="ticket-driver-meta">
-                        <span className="ticket-driver-name">
-                          {selectedDriver.name}
-                        </span>
-                        <span className="ticket-driver-id">
-                          ID: {selectedDriver.id}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="ticket-driver-empty">
-                      No driver assigned to this vehicle
-                    </p>
-                  )}
-
-                  {selectedDriver && (
-                    <div className="ticket-route-pill">
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      {selectedVehicle.route_detail?.full_name || "N/A"}
-                    </div>
-                  )}
-
-                  {showDriverModal && (
-                    <div className="ticket-driver-modal">
-                      <label className="ticket-label">
-                        Select Active Driver
-                      </label>
-                      <select
-                        className="ticket-select"
-                        value={selectedDriver?.id || ""}
-                        onChange={(e) =>
-                          handleDriverChange(parseInt(e.target.value))
-                        }
-                      >
-                        <option value="">— Choose a driver —</option>
-                        {drivers.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <button type="button" className="ticket-issue-btn">
-                Issue Late Ticket
+                  <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                  <path d="M13 5v2" />
+                  <path d="M13 17v2" />
+                  <path d="M13 11v2" />
+                </svg>
+                Open Late Ticket Form
               </button>
             </div>
           </div>
@@ -493,6 +399,14 @@ function Ticket() {
           </div>
         </div>
       </div>
+
+      {isLateTicketModalOpen && (
+        <LateTicketIssue
+          vehicles={vehicles}
+          drivers={drivers}
+          onClose={() => setIsLateTicketModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Sum
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from .models import User, Driver, Vehicle, Route, Ticket
 from .serializers import UserSerializer, DriverSerializer, VehicleSerializer, RouteSerializer, TicketSerializer
 from rest_framework.views import APIView
@@ -68,6 +68,35 @@ def parse_date_end(date_str):
     return timezone.make_aware(ph_end - timedelta(hours=8))
 
 
+def get_batch_code(batch_name):
+    return '06' if batch_name == 'Batch 1' else '15'
+
+
+def parse_iso_datetime(value):
+    if not value:
+        return timezone.now()
+    try:
+        dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except ValueError:
+        dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
+    if timezone.is_naive(dt):
+        return timezone.make_aware(dt, dt_timezone.utc)
+    return dt.astimezone(dt_timezone.utc)
+
+
+def generate_ticket_id(issued_at, batch_name):
+    local_dt = issued_at + timedelta(hours=8)
+    date_code = local_dt.strftime('%Y%m%d')
+    prefix = f'TICKET-{date_code}{get_batch_code(batch_name)}'
+    last_ticket = Ticket.objects.filter(id__startswith=prefix).order_by('-id').first()
+    if last_ticket:
+        last_seq = int(last_ticket.id[-4:]) if last_ticket.id[-4:].isdigit() else 0
+        next_seq = str(last_seq + 1).zfill(4)
+    else:
+        next_seq = '0001'
+    return f'{prefix}{next_seq}'
+
+
 def filter_collected(start_date=None, end_date=None):
     qs = Ticket.objects.filter(status='COLLECTED')
     if start_date:
@@ -87,6 +116,54 @@ def summarize(ticket_list):
     count = len(ticket_list)
     total = round(sum(float(t.collection_amount or 0) for t in ticket_list), 2)
     return {'count': count, 'total': total}
+
+@api_view(['POST'])
+def issue_late_ticket(request):
+    try:
+        data = request.data
+        
+        # Validate required fields
+        required_fields = ['vehicle', 'driver', 'route', 'intended_batch']
+        for field in required_fields:
+            if not data.get(field):
+                return Response(
+                    {"error": f"Missing required field: {field}"},
+                    status=400
+                )
+        
+        # Validate route is not empty or "N/A"
+        if not data.get('route') or data.get('route') == 'N/A':
+            return Response(
+                {"error": "Route cannot be empty or 'N/A'. Please select a valid vehicle with a route."},
+                status=400
+            )
+
+        issued_at = parse_iso_datetime(data.get('issued_at'))
+        ticket_id = generate_ticket_id(issued_at, data['intended_batch'])
+        
+        ticket = Ticket.objects.create(
+            id=ticket_id,
+            vehicle_id=data['vehicle'],
+            driver_id=data['driver'],
+            route=data['route'],
+            status='ISSUED',
+            is_late=True,
+            intended_batch=data['intended_batch'],
+            issued_at=issued_at,
+            active_user=request.user if request.user.is_authenticated else None,
+        )
+        
+        serializer = TicketSerializer(ticket)
+        return Response({
+            "message": "Late ticket issued successfully",
+            "ticket": serializer.data
+        }, status=201)
+        
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=400
+        )
 
 
 @api_view(['GET'])
