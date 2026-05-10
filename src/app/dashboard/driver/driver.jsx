@@ -1,5 +1,5 @@
 import React from "react";
-import { useDriver, Field, inputCls } from "../../../lib/useDriver";
+import { useDriver } from "../../../lib/useDriver";
 import "../../../styles/Driver.css";
 
 function Driver() {
@@ -143,6 +143,7 @@ function Driver() {
             </div>
 
             <form onSubmit={handleSubmit} className="drv-modal-body">
+
               {error && (
                 <div className="drv-alert drv-alert--inline">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -153,38 +154,47 @@ function Driver() {
               )}
 
               {editing && (
-                <Field label="Driver Code">
-                  <input type="text" value={form.code} disabled className={`${inputCls} drv-input-disabled`} />
-                </Field>
+                <div className="drv-field">
+                  <label className="drv-label">Driver Code</label>
+                  <input
+                    type="text"
+                    className="drv-input drv-input--disabled"
+                    value={form.code}
+                    disabled
+                  />
+                </div>
               )}
 
-              <Field label="Full Name">
+              <div className="drv-field">
+                <label className="drv-label">Full Name</label>
                 <input
                   type="text"
+                  className="drv-input"
                   placeholder="Full name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className={inputCls}
                 />
-              </Field>
+              </div>
 
-              <Field label="Contact Number">
+              <div className="drv-field">
+                <label className="drv-label">Contact Number</label>
                 <input
                   type="text"
+                  className="drv-input"
                   placeholder="e.g. 09XXXXXXXXX"
                   value={form.contact}
                   onChange={(e) => setForm({ ...form, contact: e.target.value })}
                   required
-                  className={inputCls}
                 />
-              </Field>
+              </div>
 
-              <Field label="Status">
+              <div className="drv-field">
+                <label className="drv-label">Status</label>
                 <select
+                  className="drv-select"
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className={inputCls}
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
@@ -198,7 +208,7 @@ function Driver() {
                     This driver has an active ticket and cannot be set to Inactive.
                   </p>
                 )}
-              </Field>
+              </div>
 
               <div className="drv-modal-footer">
                 <button type="button" className="drv-modal-btn drv-modal-btn--cancel" onClick={closeModal}>
@@ -208,6 +218,7 @@ function Driver() {
                   {editing ? "Update Record" : "Register Driver"}
                 </button>
               </div>
+
             </form>
 
           </div>
