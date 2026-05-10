@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 import { handleLogin, apiService } from '../lib/api-service';
+import { useToast } from '../components/ui/ToastConfirmContext';
 
 // ── Import images
 import sfcLogo from '../pictures/sfc-nobg-logo.png';
@@ -22,6 +23,7 @@ function Login() {
   const [headerScrolled, setHeaderScrolled] = useState(false);
 
   const navigate = useNavigate();
+  const showToast = useToast();
   const carouselImages = [tanqui1, tanqui2];
 
   useEffect(() => {
@@ -65,7 +67,7 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await handleLogin(username, password, setError, navigate);
+    await handleLogin(username, password, setError, navigate, showToast);
   };
 
   return (

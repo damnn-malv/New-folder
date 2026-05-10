@@ -231,7 +231,18 @@ export const apiService = {
 };
 
 //login
-export const handleLogin = async (username, password, setError, navigate) => {
+
+/* ── Role label helper ── */
+const roleLabel = (role) => {
+  switch ((role || "").toUpperCase()) {
+    case "MANAGER":    return "Head Manager";
+    case "SUPERVISOR": return "Supervisor";
+    case "PERSONNEL":  return "Personnel";
+    default:           return "Admin";
+  }
+};
+
+export const handleLogin = async (username, password, setError, navigate, showToast) => {
   setError("");
 
   if (!username.trim() || !password.trim()) {
@@ -253,6 +264,23 @@ export const handleLogin = async (username, password, setError, navigate) => {
     const data = await response.json();
     localStorage.setItem("accessToken", data.access);
     localStorage.setItem("refreshToken", data.refresh);
+
+    // Fetch current user to personalise welcome toast
+    try {
+      const userRes = await fetch(`${API_BASE_URL}/current-user/`, {
+        headers: { "Authorization": `Bearer ${data.access}` },
+      });
+      if (userRes.ok) {
+        const user = await userRes.json();
+        const displayName = user.first_name ? user.first_name : user.username;
+        const label = roleLabel(user.role);
+        if (showToast) showToast(`Welcome, ${label} ${displayName}!`, "success");
+      } else {
+        if (showToast) showToast("Welcome back!", "success");
+      }
+    } catch {
+      if (showToast) showToast("Welcome back!", "success");
+    }
 
     // ✅ Redirect to dashboard after successful login
     navigate("/dashboard");

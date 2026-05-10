@@ -13,6 +13,7 @@ import {
   ReportIcon, TicketIcon, UserIcon, VehicleIcon,
 } from "../../components/ui/NavIcon";
 import { apiService } from "../../lib/api-service";
+import { useToast, useConfirm } from "../../components/ui/ToastConfirmContext";
 import "./../../styles/mainIndex.css";
 import sfcLogo from "../../pictures/sfc-nobg-logo.png";
 
@@ -30,6 +31,8 @@ const NAV_ITEMS = [
 function mainIndex() {
   const [currentUser, setCurrentUser] = useState({});
   const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark");
+  const showToast   = useToast();
+  const showConfirm = useConfirm();
 
   // dark/light
   useEffect(() => {
@@ -141,7 +144,12 @@ function mainIndex() {
           </button>
 
           {/* Logout */}
-          <button className="sidebar-icon-btn" onClick={apiService.logout} title="Logout">
+          <button className="sidebar-icon-btn" onClick={async () => {
+            const ok = await showConfirm("Are you sure you want to logout?");
+            if (!ok) return;
+            showToast("Logging out...", "info");
+            setTimeout(() => apiService.logout(), 1200);
+          }} title="Logout">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
             </svg>
