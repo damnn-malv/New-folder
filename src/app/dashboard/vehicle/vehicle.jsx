@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiService } from "../../../lib/api-service";
+import { useConfirm } from "../../../components/ui/ToastConfirmContext";
 import "../../../styles/Vehicle.css";
 
 const DESTINATION = "San Fernando";
@@ -40,6 +41,7 @@ function Vehicle() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [routeMode, setRouteMode] = useState("select");
+  const showConfirm = useConfirm();
   const [newOrigin, setNewOrigin] = useState("");
   const [routeError, setRouteError] = useState("");
 
@@ -105,6 +107,9 @@ function Vehicle() {
     setRouteError("");
     const { routeId, err } = await resolveRouteId();
     if (err) { setRouteError(err); return; }
+    const confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
+    const confirmed = await showConfirm(confirmMsg);
+    if (!confirmed) return;
     try {
       const payload = {
         plate_number: form.plate_number,

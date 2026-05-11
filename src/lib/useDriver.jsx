@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
 import { apiService } from "./api-service";
+import { useConfirm } from "../components/ui/ToastConfirmContext";
 
 const EMPTY_FORM = { name: "", contact: "", status: "ACTIVE" };
+
+// Field defined OUTSIDE component to prevent remount (fixes input deselect bug)
+export const Field = ({ label, children }) => (
+  <div>
+    <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "#1a2744" }}>{label}</label>
+    {children}
+  </div>
+);
+
+export const inputCls = "w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:ring-2";
 
 export function useDriver() {
   const [drivers, setDrivers] = useState([]);
@@ -11,6 +22,8 @@ export function useDriver() {
   const [editing, setEditing] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const showConfirm = useConfirm();
 
   useEffect(() => { fetchDrivers(); fetchTickets(); }, []);
 
@@ -40,6 +53,9 @@ export function useDriver() {
       setError("Cannot set driver to Inactive — this driver has an active ticket. Resolve the ticket first.");
       return;
     }
+    const confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
+    const confirmed = await showConfirm(confirmMsg);
+    if (!confirmed) return;
     try {
       if (editing) {
         await apiService.updateDriver(editing.id, form);
