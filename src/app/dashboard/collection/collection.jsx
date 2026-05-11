@@ -110,7 +110,7 @@ function Collection() {
             className="col-override-btn"
             onClick={() => setIsUnverifiedModalOpen(true)}
           >
-            override
+            Override
           </button>
         </div>
 

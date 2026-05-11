@@ -29,15 +29,11 @@ function Dispatch() {
 
   const queue = vehicles.filter(
     (v) =>
-      v.status === "AVAILABLE" &&
+      v.status === "QUEUED" &&
       !v.is_archived &&
       tickets.some(
         (t) => t.vehicle?.id === v.id && t.status === "ISSUED" && !t.is_late,
       ),
-  );
-
-  const activeTrips = vehicles.filter(
-    (v) => v.status === "ON_TRIP" && !v.is_archived,
   );
 
   const getDriverName = (vehicle) => {
@@ -51,30 +47,22 @@ function Dispatch() {
 
   const handleDispatch = async (vehicle) => {
     try {
-      await apiService.patch(`/vehicles/${vehicle.id}/`, { status: "ON_TRIP" });
-      const [vehicleData, ticketData] = await Promise.all([
-        apiService.getVehicles(),
-        apiService.getTickets(),
-      ]);
-      setVehicles(vehicleData);
-      setTickets(ticketData);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleReturn = async (vehicle) => {
-    try {
+      // mark vehicle as dispatched
       await apiService.patch(`/vehicles/${vehicle.id}/`, {
-        status: "AVAILABLE",
+        status: "DISPATCHED",
       });
+
+      // also mark its ticket as dispatched
       const activeTicket = tickets.find(
         (t) => t.vehicle?.id === vehicle.id && t.status === "ISSUED",
       );
-      if (activeTicket)
+      if (activeTicket) {
         await apiService.patch(`/tickets/${activeTicket.id}/`, {
-          status: "RETURNED",
+          status: "DISPATCHED",
         });
+      }
+
+      // refresh data
       const [vehicleData, ticketData] = await Promise.all([
         apiService.getVehicles(),
         apiService.getTickets(),
@@ -103,10 +91,6 @@ function Dispatch() {
           <span className="dispatch-badge dispatch-badge--queue">
             <span className="dispatch-badge-dot dispatch-badge-dot--green" />
             {queue.length} In Queue
-          </span>
-          <span className="dispatch-badge dispatch-badge--active">
-            <span className="dispatch-badge-dot dispatch-badge-dot--amber" />
-            {activeTrips.length} On Road
           </span>
         </div>
       </div>
@@ -213,98 +197,6 @@ function Dispatch() {
                             <path d="M5 12h14M12 5l7 7-7 7" />
                           </svg>
                           Dispatch
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ── Active Trips ── */}
-        <div className="dispatch-card">
-          <div className="dispatch-card-header">
-            <div className="dispatch-card-header-left">
-              <span className="dispatch-card-indicator dispatch-card-indicator--amber" />
-              <span className="dispatch-card-title">Active Trips</span>
-            </div>
-            <span className="dispatch-card-count">{activeTrips.length}</span>
-          </div>
-
-          <div className="dispatch-table-wrap">
-            <table className="dispatch-table">
-              <thead>
-                <tr>
-                  <th>Plate No.</th>
-                  <th>Driver</th>
-                  <th>Route</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="4" className="dispatch-table-empty">
-                      <div className="dispatch-loading-dots">
-                        <div />
-                        <div />
-                        <div />
-                      </div>
-                    </td>
-                  </tr>
-                ) : activeTrips.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="dispatch-table-empty">
-                      <svg
-                        width="32"
-                        height="32"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        opacity="0.3"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v4l3 3" />
-                      </svg>
-                      <span>No active trips</span>
-                    </td>
-                  </tr>
-                ) : (
-                  activeTrips.map((vehicle) => (
-                    <tr
-                      key={vehicle.id}
-                      className="dispatch-table-row dispatch-table-row--trip"
-                    >
-                      <td>
-                        <span className="dispatch-plate dispatch-plate--trip">
-                          {vehicle.plate_number}
-                        </span>
-                      </td>
-                      <td className="dispatch-td-name">
-                        {getDriverName(vehicle)}
-                      </td>
-                      <td className="dispatch-td-route">
-                        {vehicle.route_detail?.full_name || "—"}
-                      </td>
-                      <td>
-                        <button
-                          className="dispatch-btn dispatch-btn--return"
-                          onClick={() => handleReturn(vehicle)}
-                        >
-                          <svg
-                            width="13"
-                            height="13"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                          >
-                            <path d="M19 12H5M12 19l-7-7 7-7" />
-                          </svg>
-                          Return
                         </button>
                       </td>
                     </tr>

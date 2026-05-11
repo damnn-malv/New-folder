@@ -6,9 +6,8 @@ import {
   STATUS_LABEL,
 } from "../../../lib/vehicle/vehicleHook";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { apiService } from "../../../lib/api-service";
-import { useConfirm } from "../../../components/ui/ToastConfirmContext";
 
 import "../../../styles/Vehicle.css";
 
@@ -35,46 +34,6 @@ function Vehicle() {
     closeModal,
     handleDelete,
   } = useVehicle();
-
-  const [drivers, setDrivers] = useState([]);
-
-  const showConfirm = useConfirm();
-
-  useEffect(() => {
-    fetchVehicles();
-    fetchDrivers();
-    fetchRoutes();
-  }, []);
-
-  const fetchDrivers = async () => {
-    try {
-      setError(null);
-      const d = await apiService.getDrivers();
-      setDrivers(d);
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
-
-  const fetchRoutes = async () => {
-    try {
-      const r = await apiService.getRoutes();
-      setRoutes(r);
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
-
-  const fetchVehicles = async () => {
-    try {
-      const v = await apiService.getVehicles();
-      setVehicles(v);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const resolveRouteId = async () => {
     if (routeMode === "select") {
