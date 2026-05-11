@@ -1,7 +1,13 @@
 const peso = (n) => {
   const num = parseFloat(n);
   if (isNaN(num)) return "₱0.00";
-  return "₱" + num.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (
+    "₱" +
+    num.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
 };
 
 /**
@@ -11,16 +17,26 @@ const peso = (n) => {
  */
 export function exportPDF(collections, filters) {
   const batchLabel =
-    filters.batch === "batch1" ? "Batch 1 (AM)" :
-    filters.batch === "batch2" ? "Batch 2 (PM)" : "All Batches";
+    filters.batch === "batch1"
+      ? "Batch 1 (AM)"
+      : filters.batch === "batch2"
+        ? "Batch 2 (PM)"
+        : "All Batches";
 
   const dateRange =
-    filters.startDate && filters.endDate ? `${filters.startDate} to ${filters.endDate}` :
-    filters.startDate ? `From ${filters.startDate}` :
-    filters.endDate ? `Until ${filters.endDate}` : "All Time";
+    filters.startDate && filters.endDate
+      ? `${filters.startDate} to ${filters.endDate}`
+      : filters.startDate
+        ? `From ${filters.startDate}`
+        : filters.endDate
+          ? `Until ${filters.endDate}`
+          : "All Time";
 
   const now = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
-  const totalAmt = collections.reduce((s, r) => s + (r.amount || 0), 0);
+  const totalAmt = collections.reduce(
+    (s, r) => s + Number(r.collection_amount || 0),
+    0,
+  );
 
   // Group by date then by batch for receipt rows
   const byDate = {};
@@ -31,19 +47,28 @@ export function exportPDF(collections, filters) {
     else byDate[d].batch2.push(r);
   });
 
-  const receiptRows = Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, batches]) => {
-    let rows = "";
-    if (batches.batch1.length > 0) {
-      const total = batches.batch1.reduce((s, r) => s + (r.amount || 0), 0);
-      rows += `<tr><td>${date}</td><td>Batch 1 (AM)</td><td style="text-align:center">${batches.batch1.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
-    }
-    if (batches.batch2.length > 0) {
-      const total = batches.batch2.reduce((s, r) => s + (r.amount || 0), 0);
-      rows += `<tr><td>${date}</td><td>Batch 2 (PM)</td><td style="text-align:center">${batches.batch2.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
-    }
-    return rows;
-  }).join("");
-  
+  const receiptRows = Object.entries(byDate)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, batches]) => {
+      let rows = "";
+      if (batches.batch1.length > 0) {
+        const total = batches.batch1.reduce(
+          (s, r) => s + Number(r.collection_amount || 0),
+          0,
+        );
+        rows += `<tr><td>${date}</td><td>Batch 1 (AM)</td><td style="text-align:center">${batches.batch1.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
+      }
+      if (batches.batch2.length > 0) {
+        const total = batches.batch2.reduce(
+          (s, r) => s + Number(r.collection_amount || 0),
+          0,
+        );
+        rows += `<tr><td>${date}</td><td>Batch 2 (PM)</td><td style="text-align:center">${batches.batch2.length}</td><td style="text-align:right">${peso(total)}</td></tr>`;
+      }
+      return rows;
+    })
+    .join("");
+
   const html = `<!DOCTYPE html>
   <html>
   <head>
@@ -105,6 +130,10 @@ export function exportPDF(collections, filters) {
   const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);
   const w = window.open(url, "_blank");
-  if (w) setTimeout(() => { w.focus(); w.print(); }, 500);
+  if (w)
+    setTimeout(() => {
+      w.focus();
+      w.print();
+    }, 500);
   URL.revokeObjectURL(url);
 }

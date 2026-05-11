@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 import { apiService } from "../../lib/api-service";
 import "../../styles/Dashboard.css";
@@ -8,7 +15,13 @@ import "../../styles/Dashboard.css";
 const peso = (n) => {
   const num = parseFloat(n);
   if (isNaN(num)) return "₱0.00";
-  return "₱" + num.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (
+    "₱" +
+    num.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
 };
 
 // ─── Stat Card ─────────────────────────────────────────────────────────────────
@@ -56,15 +69,16 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
-
       {/* Header */}
       <div className="col-header">
         <div className="col-header-left">
           <div className="col-header-accent" />
-            <div>
-              <h1 className="col-title">Dashboard</h1>
-              <p className="col-subtitle">Overview of today's collection and activity</p>
-            </div>
+          <div>
+            <h1 className="col-title">Dashboard</h1>
+            <p className="col-subtitle">
+              Overview of today's collection and activity
+            </p>
+          </div>
         </div>
       </div>
 
@@ -104,17 +118,13 @@ export default function Dashboard() {
           <div className="dashboard-section">
             <div className="dashboard-section-label">Overall</div>
             <div className="stat-cards-row">
-              
-             
               <StatCard
                 label="Active Vehicles"
                 value={stats?.active_vehicles ?? 0}
-                
               />
               <StatCard
                 label="Active Drivers"
                 value={stats?.active_drivers ?? 0}
-                
               />
             </div>
           </div>
@@ -122,7 +132,9 @@ export default function Dashboard() {
           {/* ─── Line Chart ──────────────────────────────────────────────────── */}
           <div className="chart-card">
             <div className="chart-card-header">
-              <span className="chart-card-title">Collections Per Day — Batch 1 vs Batch 2</span>
+              <span className="chart-card-title">
+                Collections Per Day — Batch 1 vs Batch 2
+              </span>
               <span className="chart-card-badge">Last 14 days</span>
             </div>
             {chartData.length === 0 ? (
@@ -130,9 +142,18 @@ export default function Dashboard() {
             ) : (
               <div className="chart-card-body">
                 <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={chartData} margin={{ top: 4, right: 24, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,168,76,0.15)" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#c9a84c" }} />
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 4, right: 24, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(201,168,76,0.15)"
+                    />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: "#c9a84c" }}
+                    />
                     <YAxis tick={{ fontSize: 11, fill: "#c9a84c" }} />
                     <Tooltip
                       contentStyle={{

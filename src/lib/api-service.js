@@ -43,7 +43,8 @@ export const apiService = {
       if (response.status === 401) {
         const refreshed = await this.refreshToken();
         if (refreshed) {
-          fetchOptions.headers["Authorization"] = `Bearer ${localStorage.getItem("accessToken")}`;
+          fetchOptions.headers["Authorization"] =
+            `Bearer ${localStorage.getItem("accessToken")}`;
           response = await fetch(url, fetchOptions);
         }
       }
@@ -235,7 +236,7 @@ export const apiService = {
 
   getReportChart() {
     return this.get("/report/chart/");
-  }
+  },
 };
 
 //login
@@ -243,14 +244,24 @@ export const apiService = {
 /* ── Role label helper ── */
 const roleLabel = (role) => {
   switch ((role || "").toUpperCase()) {
-    case "MANAGER":    return "Head Manager";
-    case "SUPERVISOR": return "Supervisor";
-    case "PERSONNEL":  return "Personnel";
-    default:           return "Admin";
+    case "MANAGER":
+      return "Head Manager";
+    case "SUPERVISOR":
+      return "Supervisor";
+    case "PERSONNEL":
+      return "Personnel";
+    default:
+      return "Admin";
   }
 };
 
-export const handleLogin = async (username, password, setError, navigate, showToast) => {
+export const handleLogin = async (
+  username,
+  password,
+  setError,
+  navigate,
+  showToast,
+) => {
   setError("");
 
   if (!username.trim() || !password.trim()) {
@@ -276,13 +287,14 @@ export const handleLogin = async (username, password, setError, navigate, showTo
     // Fetch current user to personalise welcome toast
     try {
       const userRes = await fetch(`${API_BASE_URL}/current-user/`, {
-        headers: { "Authorization": `Bearer ${data.access}` },
+        headers: { Authorization: `Bearer ${data.access}` },
       });
       if (userRes.ok) {
         const user = await userRes.json();
         const displayName = user.first_name ? user.first_name : user.username;
         const label = roleLabel(user.role);
-        if (showToast) showToast(`Welcome, ${label} ${displayName}!`, "success");
+        if (showToast)
+          showToast(`Welcome, ${label} ${displayName}!`, "success");
       } else {
         if (showToast) showToast("Welcome back!", "success");
       }

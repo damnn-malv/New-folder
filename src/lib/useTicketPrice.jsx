@@ -21,7 +21,9 @@ export function useTicketPrice() {
       }
     } catch (err) {
       setTicketFee(0);
-      setTicketPriceError(err.message || "Unable to load current ticket price.");
+      setTicketPriceError(
+        err.message || "Unable to load current ticket price.",
+      );
     } finally {
       setTicketPriceLoading(false);
     }

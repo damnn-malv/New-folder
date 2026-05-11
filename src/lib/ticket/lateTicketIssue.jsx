@@ -42,7 +42,7 @@ const LateTicketIssue = ({ vehicles, drivers, ticketFee, onClose }) => {
       is_late: true,
       intended_batch: lateBatch,
       issued_at: new Date(lateDate).toISOString(),
-      collection_amount: ticketFee
+      collection_amount: ticketFee,
     };
     try {
       await apiService.post("/tickets/late/", payload);
