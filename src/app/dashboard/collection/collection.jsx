@@ -98,7 +98,7 @@ function Collection() {
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 2")}
           />
-          <button className="cursor-pointer">click here</button>
+          <button className="cursor-pointer">override</button>
         </div>
 
         {/* ── Right: Collection Log ── */}
