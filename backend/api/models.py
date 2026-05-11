@@ -67,6 +67,7 @@ class Vehicle(models.Model):
         ('AVAILABLE', 'Available'),
         ('ON_TRIP', 'On Trip'),
         ('MAINTENANCE', 'Maintenance'),
+        ('DORMANT', 'Dormant'),
     ]
 
     id = models.AutoField(primary_key=True)   
