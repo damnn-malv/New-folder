@@ -1,51 +1,43 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 import { handleLogin, apiService } from '../lib/api-service';
 import { useToast } from '../components/ui/ToastConfirmContext';
 
 // ── Import images
-import sfcLogo from '../pictures/sfc-nobg-logo.png';
+import sfcLogo   from '../pictures/sfc-nobg-logo.png';
 import sfcBanner from '../pictures/sfc-nobg-banner.png';
-import sfcMain from '../pictures/sfc-main.jpg';
-import tanqui1 from '../pictures/tanqui1.jpg';
-import tanqui2 from '../pictures/tanqui2.jpg';
-
-function Login() {
-  const [showLoginForm, setShowLoginForm] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [queueData, setQueueData] = useState([]);
-  const [loadingQueue, setLoadingQueue] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
+import sfcMain   from '../pictures/sfc-main.jpg';
+ function Login() {
+  const [showLoginForm,  setShowLoginForm]  = useState(false);
+  const [username,       setUsername]       = useState("");
+  const [password,       setPassword]       = useState("");
+  const [error,          setError]          = useState("");
+  const [queueData,      setQueueData]      = useState([]);
+  const [nextQueue,      setNextQueue]      = useState([]);
+  const [routes,         setRoutes]         = useState([]);
+  const [selectedRoute,  setSelectedRoute]  = useState("ALL");
+  const [loadingQueue,   setLoadingQueue]   = useState(false);
+  const [refreshing,     setRefreshing]     = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
 
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const showToast = useToast();
-  const carouselImages = [tanqui1, tanqui2];
 
   useEffect(() => {
     loadQueue();
-    const handleScroll = () => setHeaderScrolled(window.scrollY > 60);
+    loadNextQueue();
+    loadRoutes();
+    const handleScroll = () => setHeaderScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Auto-advance carousel
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCarouselIndex(i => (i + 1) % carouselImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
   }, []);
 
   const loadQueue = async () => {
     setLoadingQueue(true);
     try {
       const data = await apiService.get('/queue/');
-      setQueueData(data);
+      setQueueData(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load queue:', err);
     } finally {
@@ -53,13 +45,29 @@ function Login() {
     }
   };
 
+  const loadNextQueue = async () => {
+    try {
+      // Available vehicles not currently dispatched
+      const data = await apiService.getVehicles();
+      setNextQueue(Array.isArray(data) ? data.filter(v => v.status === 'AVAILABLE') : []);
+    } catch (err) {
+      console.error('Failed to load next queue:', err);
+    }
+  };
+
+  const loadRoutes = async () => {
+    try {
+      const data = await apiService.getRoutes();
+      setRoutes(Array.isArray(data) ? data.filter(r => r.is_active) : []);
+    } catch (err) {
+      console.error('Failed to load routes:', err);
+    }
+  };
+
   const handleRefreshQueue = async () => {
     setRefreshing(true);
     try {
-      const data = await apiService.get('/queue/');
-      setQueueData(data);
-    } catch (err) {
-      console.error('Failed to refresh queue:', err);
+      await Promise.all([loadQueue(), loadNextQueue(), loadRoutes()]);
     } finally {
       setRefreshing(false);
     }
@@ -70,24 +78,31 @@ function Login() {
     await handleLogin(username, password, setError, navigate, showToast);
   };
 
-  return (
-    <div className="lp-root">
+  // Filter next queue by selected route
+  const filteredNextQueue = selectedRoute === 'ALL'
+    ? nextQueue
+    : nextQueue.filter(v => {
+        const routeName = v.route_detail?.full_name || v.route_detail?.origin || '';
+        return routeName === selectedRoute;
+      });
 
-      {/* ══════════════════════════════════════
-          HEADER
-      ══════════════════════════════════════ */}
+  return (
+    <div className="lp-root" style={{ backgroundImage: `url(${sfcMain})` }}>
+
+      {/* Background overlay */}
+      <div className="lp-bg-overlay" />
+
+      {/* ── HEADER ── */}
       <header className={`lp-header ${headerScrolled ? 'lp-header--scrolled' : ''}`}>
         <div className="lp-header__inner">
-          {/* Logo */}
           <div className="lp-header__brand">
-            <img src={sfcLogo} alt="SFC Logo" className="lp-header__logo" style={{borderRadius: '40px'}}/>
+            <img src={sfcLogo} alt="SFC Logo" className="lp-header__logo" style={{ borderRadius: '40px' }} />
             <div className="lp-header__brand-text">
               <span className="lp-header__title">North Central Terminal</span>
               <span className="lp-header__sub">City Government of San Fernando</span>
             </div>
           </div>
 
-          {/* Staff Login button / Back button */}
           {!showLoginForm ? (
             <button className="lp-btn lp-btn--gold" onClick={() => setShowLoginForm(true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -105,14 +120,12 @@ function Login() {
         </div>
       </header>
 
-      {/* ══════════════════════════════════════
-          LOGIN FORM OVERLAY
-      ══════════════════════════════════════ */}
+      {/* ── LOGIN FORM OVERLAY ── */}
       {showLoginForm && (
         <div className="lp-login-overlay" onClick={() => { setShowLoginForm(false); setError(''); }}>
           <div className="lp-login-modal" onClick={e => e.stopPropagation()}>
             <div className="lp-login-modal__brand">
-              <img src={sfcLogo} alt="Logo" className="lp-login-modal__logo" style={{borderRadius: '40px'}} />
+              <img src={sfcLogo} alt="Logo" className="lp-login-modal__logo" style={{ borderRadius: '40px' }} />
               <h2>Staff Access</h2>
               <p>Sign in to manage terminal operations</p>
             </div>
@@ -120,22 +133,15 @@ function Login() {
               <div className="lp-field">
                 <label htmlFor="username">Username</label>
                 <input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  autoFocus
+                  id="username" type="text" placeholder="Enter your username"
+                  value={username} onChange={e => setUsername(e.target.value)} autoFocus
                 />
               </div>
               <div className="lp-field">
                 <label htmlFor="password">Password</label>
                 <input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  id="password" type="password" placeholder="Enter your password"
+                  value={password} onChange={e => setPassword(e.target.value)}
                 />
               </div>
               {error && <div className="lp-error">{error}</div>}
@@ -145,59 +151,35 @@ function Login() {
         </div>
       )}
 
-      {/* ══════════════════════════════════════
-          HERO SECTION
-      ══════════════════════════════════════ */}
-      <section className="lp-hero" style={{ backgroundImage: `url(${sfcMain})` }}>
-        <div className="lp-hero__overlay" />
-        <div className="lp-hero__content">
-          <div className="lp-hero__badge">Est. San Fernando, La Union</div>
-          <h1 className="lp-hero__title">North Central<br />Terminal</h1>
-          <p className="lp-hero__desc">
-            The primary jeepney dispatch hub serving the City of San Fernando —<br />
-            connecting communities across La Union with efficiency and care.
-          </p>
-          <div className="lp-hero__cta-row">
-            <button className="lp-btn lp-btn--gold lp-btn--lg" onClick={() => {
-              document.getElementById('lp-queue').scrollIntoView({ behavior: 'smooth' });
-            }}>
-              View Queue
-            </button>
-            <button className="lp-btn lp-btn--ghost lp-btn--lg" onClick={() => {
-              document.getElementById('lp-showcase').scrollIntoView({ behavior: 'smooth' });
-            }}>
-              Learn More
-            </button>
-          </div>
-        </div>
-        <div className="lp-hero__scroll-hint">
-          <span>Scroll</span>
-          <div className="lp-hero__scroll-line" />
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
-          QUEUE SECTION
-      ══════════════════════════════════════ */}
-      <section id="lp-queue" className="lp-queue-section">
+      {/* ── MAIN CONTENT ── */}
+      <main className="lp-main">
         <div className="lp-container">
-          <div className="lp-section-header">
+
+          {/* Page title bar */}
+          <div className="lp-page-title">
             <div>
               <span className="lp-section-eyebrow">Live Updates</span>
-              <h2 className="lp-section-title">Current Jeepney Queue</h2>
+              <h2 className="lp-section-title lp-section-title--light">Jeepney Queue Board</h2>
             </div>
             <button
               className={`lp-btn lp-btn--outline-gold ${refreshing ? 'lp-btn--loading' : ''}`}
               onClick={handleRefreshQueue}
               disabled={refreshing}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={refreshing ? 'lp-spin' : ''}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+                className={refreshing ? 'lp-spin' : ''}>
                 <polyline points="23 4 23 10 17 10" />
                 <polyline points="1 20 1 14 7 14" />
                 <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
               {refreshing ? 'Refreshing…' : 'Refresh'}
             </button>
+          </div>
+
+          {/* ── ACTIVE QUEUE ── */}
+          <div className="lp-board-label">
+            <div className="lp-board-label__dot lp-board-label__dot--active" />
+            Active Queue
           </div>
 
           <div className="lp-queue-card">
@@ -208,7 +190,13 @@ function Login() {
               </div>
             ) : queueData.length === 0 ? (
               <div className="lp-queue-empty">
-                <p>No vehicles currently in queue.</p>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
+                  <rect x="1" y="3" width="15" height="13" rx="1"/>
+                  <path d="M16 8h4l3 3v5h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                <p>No active queue at this time.</p>
               </div>
             ) : (
               <div className="lp-table-wrap">
@@ -216,7 +204,7 @@ function Login() {
                   <thead>
                     <tr>
                       <th>Plate Number</th>
-                      <th>Driver Name</th>
+                      <th>Driver</th>
                       <th>Route</th>
                       <th>Status</th>
                       <th>Est. Departure</th>
@@ -244,93 +232,81 @@ function Login() {
               Last updated: {new Date().toLocaleTimeString()}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ══════════════════════════════════════
-          SHOWCASE SECTION
-      ══════════════════════════════════════ */}
-      <section id="lp-showcase" className="lp-showcase-section">
-        <div className="lp-container lp-showcase-grid">
-          {/* Left: Text */}
-          <div className="lp-showcase-text">
-            <span className="lp-section-eyebrow lp-section-eyebrow--light">About the Terminal</span>
-            <h2 className="lp-section-title lp-section-title--light">A Hub Built for the Community</h2>
-            <p className="lp-showcase-para">
-              The North Central Terminal in Tanqui, San Fernando City serves as the backbone of
-              public transport in La Union. It coordinates daily jeepney dispatch operations,
-              ensuring safe, orderly, and timely service for thousands of commuters every day.
-            </p>
-            <p className="lp-showcase-para">
-              With modern queue management, route tracking, and driver coordination, the terminal
-              bridges the gap between traditional public transport and efficient city governance.
-            </p>
-            <div className="lp-showcase-stats">
-              <div className="lp-stat">
-                <span className="lp-stat__num">50+</span>
-                <span className="lp-stat__label">Routes Served</span>
-              </div>
-              <div className="lp-stat">
-                <span className="lp-stat__num">200+</span>
-                <span className="lp-stat__label">Daily Vehicles</span>
-              </div>
-              <div className="lp-stat">
-                <span className="lp-stat__num">24/7</span>
-                <span className="lp-stat__label">Operations</span>
-              </div>
+          {/* ── NEXT QUEUE ── */}
+          <div className="lp-next-header">
+            <div className="lp-board-label">
+              <div className="lp-board-label__dot lp-board-label__dot--next" />
+              Next in Queue — Available Vehicles
             </div>
-          </div>
 
-          {/* Right: Carousel */}
-          <div className="lp-carousel">
-            <div className="lp-carousel__track">
-              {carouselImages.map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt={`Terminal view ${i + 1}`}
-                  className={`lp-carousel__img ${i === carouselIndex ? 'lp-carousel__img--active' : ''}`}
-                />
-              ))}
-              <div className="lp-carousel__overlay" />
-            </div>
-            <div className="lp-carousel__controls">
-              <button
-                className="lp-carousel__btn"
-                onClick={() => setCarouselIndex(i => (i - 1 + carouselImages.length) % carouselImages.length)}
-                aria-label="Previous"
+            {/* Route filter */}
+            <div className="lp-route-filter">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              <select
+                className="lp-route-select"
+                value={selectedRoute}
+                onChange={e => setSelectedRoute(e.target.value)}
               >
-                ‹
-              </button>
-              <div className="lp-carousel__dots">
-                {carouselImages.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`lp-carousel__dot ${i === carouselIndex ? 'lp-carousel__dot--active' : ''}`}
-                    onClick={() => setCarouselIndex(i)}
-                    aria-label={`Slide ${i + 1}`}
-                  />
+                <option value="ALL">All Routes</option>
+                {routes.map(r => (
+                  <option key={r.id} value={r.full_name || r.origin}>
+                    {r.full_name || r.origin}
+                  </option>
                 ))}
-              </div>
-              <button
-                className="lp-carousel__btn"
-                onClick={() => setCarouselIndex(i => (i + 1) % carouselImages.length)}
-                aria-label="Next"
-              >
-                ›
-              </button>
+              </select>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ══════════════════════════════════════
-          FOOTER
-      ══════════════════════════════════════ */}
+          <div className="lp-queue-card lp-queue-card--next">
+            {filteredNextQueue.length === 0 ? (
+              <div className="lp-queue-empty">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
+                  <rect x="1" y="3" width="15" height="13" rx="1"/>
+                  <path d="M16 8h4l3 3v5h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                <p>No available vehicles{selectedRoute !== 'ALL' ? ` for ${selectedRoute}` : ''}.</p>
+              </div>
+            ) : (
+              <div className="lp-table-wrap">
+                <table className="lp-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Plate Number</th>
+                      <th>Route</th>
+                      <th>Driver</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredNextQueue.map((v, idx) => (
+                      <tr key={v.id}>
+                        <td className="lp-td--num">{idx + 1}</td>
+                        <td><span className="lp-plate">{v.plate_number}</span></td>
+                        <td>{v.route_detail?.full_name || v.route_detail?.origin || <span className="lp-na">No route</span>}</td>
+                        <td>{v.active_driver_name || <span className="lp-na">Unassigned</span>}</td>
+                        <td><span className="lp-status lp-status--available">Available</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </main>
+
+      {/* ── FOOTER ── */}
       <footer className="lp-footer">
         <div className="lp-container lp-footer__inner">
           <div className="lp-footer__brand">
-            <img src={sfcBanner} alt="San Fernando City Banner" className="lp-footer__banner" style={{borderRadius: "100px"}}/>
+            <img src={sfcBanner} alt="San Fernando City Banner" className="lp-footer__banner" style={{ borderRadius: '100px' }} />
             <p className="lp-footer__desc">
               Serving the commuters of San Fernando City with organized, efficient, and transparent
               public transport management under the City Government of San Fernando, La Union.
