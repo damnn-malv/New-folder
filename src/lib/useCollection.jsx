@@ -9,6 +9,7 @@ export function useCollection() {
   const [error, setError] = useState(null);
   const [batchStats, setBatchStats] = useState(null);
   const [verifyingBatch, setVerifyingBatch] = useState(null);
+  const [verifyingTicketId, setVerifyingTicketId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [verifiedBatches, setVerifiedBatches] = useState({
     batch1: null,
@@ -160,6 +161,23 @@ export function useCollection() {
     }
   };
 
+  const handleVerifyTicket = async (ticketId) => {
+    try {
+      setVerifyingTicketId(ticketId);
+      await apiService.patch(`/tickets/${ticketId}/`, {
+        is_verified: true,
+        status: "COLLECTED",
+      });
+      setSuccessMessage(`Ticket #${ticketId} verified successfully.`);
+      setTimeout(() => setSuccessMessage(""), 3000);
+      await fetchTickets();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setVerifyingTicketId(null);
+    }
+  };
+
   const clearSuccessMessage = () => setSuccessMessage("");
   const clearError = () => setError(null);
 
@@ -171,12 +189,14 @@ export function useCollection() {
     error,
     batchStats,
     verifyingBatch,
+    verifyingTicketId,
     successMessage,
     setSearchTerm,
     setError,
     setSuccessMessage,
     fetchTickets,
     handleVerifyBatch,
+    handleVerifyTicket,
     clearSuccessMessage,
     clearError,
     isBatchVerifiable,

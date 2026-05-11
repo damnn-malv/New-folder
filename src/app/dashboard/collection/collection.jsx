@@ -9,20 +9,27 @@ import "../../../styles/Collection.css";
 
 function Collection() {
   const {
+    tickets,
     filteredTickets,
     searchTerm,
     loading,
     error,
     batchStats,
     verifyingBatch,
+    verifyingTicketId,
     successMessage,
     setSearchTerm,
     handleVerifyBatch,
+    handleVerifyTicket,
     isBatchVerifiable,
   } = useCollection();
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [isUnverifiedModalOpen, setIsUnverifiedModalOpen] = useState(false);
   const rowsPerPage = 15;
+  const unverifiedTickets = tickets.filter(
+    (ticket) => !ticket.is_verified && ticket.status !== "CANCELLED",
+  );
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const currentTickets = filteredTickets.slice(startIndex, endIndex);
@@ -98,7 +105,13 @@ function Collection() {
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 2")}
           />
-          <button className="cursor-pointer">override</button>
+          <button
+            type="button"
+            className="col-override-btn"
+            onClick={() => setIsUnverifiedModalOpen(true)}
+          >
+            override
+          </button>
         </div>
 
         {/* ── Right: Collection Log ── */}
@@ -280,6 +293,109 @@ function Collection() {
           )}
         </div>
       </div>
+
+      {isUnverifiedModalOpen && (
+        <div
+          className="col-overlay"
+          onClick={() => setIsUnverifiedModalOpen(false)}
+        >
+          <div className="col-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="col-modal-header">
+              <div>
+                <h2 className="col-modal-title">Unverified Tickets</h2>
+                <p className="col-modal-subtitle">
+                  All tickets that are not verified yet.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="col-modal-close"
+                onClick={() => setIsUnverifiedModalOpen(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="col-modal-body">
+              <div className="col-table-wrap">
+                <table className="col-table">
+                  <thead>
+                    <tr>
+                      {[
+                        "Ticket ID",
+                        "Batch",
+                        "Time",
+                        "Vehicle",
+                        "Driver",
+                        "Action",
+                      ].map((h) => (
+                        <th key={h}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {unverifiedTickets.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="col-table-state">
+                          No unverified tickets to show.
+                        </td>
+                      </tr>
+                    ) : (
+                      unverifiedTickets.map((ticket) => {
+                        const effectiveBatch =
+                          OperationsService.getEffectiveBatchName(ticket);
+                        return (
+                          <tr key={ticket.id} className="col-table-row">
+                            <td>
+                              <span className="col-id-badge">#{ticket.id}</span>
+                            </td>
+                            <td>
+                              <div className="col-batch-cell">
+                                <span className="col-batch-name">
+                                  {effectiveBatch}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="col-td-time">
+                              {formatTime(ticket.issued_at)}
+                            </td>
+                            <td>
+                              {ticket.vehicle?.plate_number ? (
+                                <span className="col-plate">
+                                  {ticket.vehicle.plate_number}
+                                </span>
+                              ) : (
+                                <span className="col-na">N/A</span>
+                              )}
+                            </td>
+                            <td className="col-td-name">
+                              {ticket.driver?.name || (
+                                <span className="col-na">N/A</span>
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                type="button"
+                                className="col-action-btn"
+                                onClick={() => handleVerifyTicket(ticket.id)}
+                                disabled={verifyingTicketId === ticket.id}
+                              >
+                                {verifyingTicketId === ticket.id
+                                  ? "Verifying…"
+                                  : "Verify"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
