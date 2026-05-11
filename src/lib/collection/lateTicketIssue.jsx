@@ -3,13 +3,13 @@ import { apiService } from "../api-service";
 import { SHIFTS } from "../constants";
 
 const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
-  const [lateDate, setLateDate]           = useState("");
-  const [lateBatch, setLateBatch]         = useState("");
+  const [lateDate, setLateDate] = useState("");
+  const [lateBatch, setLateBatch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [selectedDriver, setSelectedDriver]   = useState(null);
+  const [selectedDriver, setSelectedDriver] = useState(null);
 
-  const handleDateChange    = (e) => setLateDate(e.target.value);
-  const handleBatchChange   = (e) => setLateBatch(e.target.value);
+  const handleDateChange = (e) => setLateDate(e.target.value);
+  const handleBatchChange = (e) => setLateBatch(e.target.value);
   const handleVehicleChange = (e) => {
     const vehicle = vehicles.find((v) => v.id === parseInt(e.target.value));
     setSelectedVehicle(vehicle);
@@ -24,14 +24,20 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
       alert("Please fill all fields");
       return;
     }
-    if (!selectedVehicle.route_detail?.full_name && !selectedVehicle.full_name) {
+    if (
+      !selectedVehicle.route_detail?.full_name &&
+      !selectedVehicle.full_name
+    ) {
       alert("Selected vehicle does not have a valid route assigned");
       return;
     }
     const payload = {
       vehicle: selectedVehicle.id,
       driver: selectedDriver.id,
-      route: selectedVehicle.route_detail?.full_name || selectedVehicle.full_name || "",
+      route:
+        selectedVehicle.route_detail?.full_name ||
+        selectedVehicle.full_name ||
+        "",
       status: "ISSUED",
       is_late: true,
       intended_batch: lateBatch,
@@ -50,21 +56,32 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
   };
 
   const formatHour = (hour) => {
-    const suffix  = hour >= 12 ? "pm" : "am";
+    const suffix = hour >= 12 ? "pm" : "am";
     const display = ((hour + 11) % 12) + 1;
     return `${display}${suffix}`;
   };
 
   return (
-    <div className="ticket-overlay" onClick={(onClose, () => window.location.reload())}>
+    <div
+      className="ticket-overlay"
+      onClick={(onClose, () => window.location.reload())}
+    >
       <div className="ticket-modal" onClick={(e) => e.stopPropagation()}>
-
         {/* Header */}
         <div className="ticket-modal-header">
           <div className="ticket-modal-header-left">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-              <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="2"
+            >
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+              <path d="M13 5v2" />
+              <path d="M13 17v2" />
+              <path d="M13 11v2" />
             </svg>
             <h2 className="ticket-modal-title">Issue Late Ticket</h2>
           </div>
@@ -73,20 +90,36 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
             onClick={(onClose, () => window.location.reload())}
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
             </svg>
           </button>
         </div>
 
         {/* Body */}
         <div className="ticket-modal-body">
-
           {/* Late issuance notice */}
           <div className="ticket-warning" style={{ marginBottom: 0 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ticket-warning-icon">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-              <path d="M12 9v4"/><path d="M12 17h.01"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="ticket-warning-icon"
+            >
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
             </svg>
             <div className="ticket-warning-body">
               <span className="ticket-warning-msg">
@@ -110,13 +143,19 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
           {/* Batch */}
           <div className="ticket-field">
             <label className="ticket-label">Batch</label>
-            <select className="ticket-select" value={lateBatch} onChange={handleBatchChange}>
+            <select
+              className="ticket-select"
+              value={lateBatch}
+              onChange={handleBatchChange}
+            >
               <option value="">— Select Batch —</option>
               <option value={SHIFTS.BATCH_1.name}>
-                {SHIFTS.BATCH_1.name} ({formatHour(SHIFTS.BATCH_1.startHour)}–{formatHour(SHIFTS.BATCH_1.endHour)})
+                {SHIFTS.BATCH_1.name} ({formatHour(SHIFTS.BATCH_1.startHour)}–
+                {formatHour(SHIFTS.BATCH_1.endHour)})
               </option>
               <option value={SHIFTS.BATCH_2.name}>
-                {SHIFTS.BATCH_2.name} ({formatHour(SHIFTS.BATCH_2.startHour)}–{formatHour(SHIFTS.BATCH_2.endHour)})
+                {SHIFTS.BATCH_2.name} ({formatHour(SHIFTS.BATCH_2.startHour)}–
+                {formatHour(SHIFTS.BATCH_2.endHour)})
               </option>
             </select>
           </div>
@@ -132,7 +171,8 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
               <option value="">— Select Vehicle —</option>
               {vehicles.map((vehicle) => (
                 <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.plate_number} — {vehicle.route_detail?.full_name || "N/A"}
+                  {vehicle.plate_number} —{" "}
+                  {vehicle.route_detail?.full_name || "N/A"}
                 </option>
               ))}
             </select>
@@ -154,7 +194,6 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
               ))}
             </select>
           </div>
-
         </div>
 
         {/* Footer */}
@@ -171,14 +210,22 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
             className="ticket-modal-btn ticket-modal-btn--submit"
             onClick={handleIssueLateTicket}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-              <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+              <path d="M13 5v2" />
+              <path d="M13 17v2" />
+              <path d="M13 11v2" />
             </svg>
             Issue Ticket
           </button>
         </div>
-
       </div>
     </div>
   );
