@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-import React from "react";
 import {
   RouteField,
   Field,
@@ -7,15 +5,14 @@ import {
   STATUS_COLOR,
   STATUS_LABEL,
 } from "../../../lib/vehicle/vehicleHook";
-=======
+
 import React, { useState, useEffect } from "react";
 import { apiService } from "../../../lib/api-service";
 import { useConfirm } from "../../../components/ui/ToastConfirmContext";
->>>>>>> c6d2a076361dca3ff130e054e938dd764dda7b7e
+
 import "../../../styles/Vehicle.css";
 
 function Vehicle() {
-<<<<<<< HEAD
   const {
     vehicles,
     loading,
@@ -38,19 +35,10 @@ function Vehicle() {
     closeModal,
     handleDelete,
   } = useVehicle();
-=======
-  const [vehicles, setVehicles] = useState([]);
+
   const [drivers, setDrivers] = useState([]);
-  const [routes, setRoutes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [editing, setEditing] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [routeMode, setRouteMode] = useState("select");
+
   const showConfirm = useConfirm();
-  const [newOrigin, setNewOrigin] = useState("");
-  const [routeError, setRouteError] = useState("");
 
   useEffect(() => {
     fetchVehicles();
@@ -63,22 +51,29 @@ function Vehicle() {
       setError(null);
       const d = await apiService.getDrivers();
       setDrivers(d);
-    } catch (err) { console.error(err.message); }
+    } catch (err) {
+      console.error(err.message);
+    }
   };
 
   const fetchRoutes = async () => {
     try {
       const r = await apiService.getRoutes();
       setRoutes(r);
-    } catch (err) { console.error(err.message); }
+    } catch (err) {
+      console.error(err.message);
+    }
   };
 
   const fetchVehicles = async () => {
     try {
       const v = await apiService.getVehicles();
       setVehicles(v);
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resolveRouteId = async () => {
@@ -88,8 +83,11 @@ function Vehicle() {
     }
     if (routeMode === "new") {
       const origin = newOrigin.trim();
-      if (!origin) return { routeId: null, err: "Please enter a route origin." };
-      const existing = routes.find((r) => r.origin.toLowerCase() === origin.toLowerCase());
+      if (!origin)
+        return { routeId: null, err: "Please enter a route origin." };
+      const existing = routes.find(
+        (r) => r.origin.toLowerCase() === origin.toLowerCase(),
+      );
       if (existing) return { routeId: existing.id, err: null };
       const created = await apiService.createRoute({ origin });
       setRoutes((prev) => [...prev, created]);
@@ -97,9 +95,12 @@ function Vehicle() {
     }
     if (routeMode === "edit") {
       const origin = newOrigin.trim();
-      if (!origin) return { routeId: null, err: "Please enter a route origin." };
+      if (!origin)
+        return { routeId: null, err: "Please enter a route origin." };
       const existing = routes.find(
-        (r) => r.origin.toLowerCase() === origin.toLowerCase() && r.id !== form.route
+        (r) =>
+          r.origin.toLowerCase() === origin.toLowerCase() &&
+          r.id !== form.route,
       );
       if (existing) return { routeId: existing.id, err: null };
       const updated = await apiService.updateRoute(form.route, { origin });
@@ -109,74 +110,6 @@ function Vehicle() {
     return { routeId: null, err: "Unknown route mode." };
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setRouteError("");
-    const { routeId, err } = await resolveRouteId();
-    if (err) { setRouteError(err); return; }
-    const confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
-    const confirmed = await showConfirm(confirmMsg);
-    if (!confirmed) return;
-    try {
-      const payload = {
-        plate_number: form.plate_number,
-        route: routeId,
-        status: form.status,
-        active_driver: form.active_driver || null,
-      };
-      if (editing) {
-        await apiService.updateVehicle(editing.id, payload);
-      } else {
-        await apiService.createVehicle(payload);
-      }
-      fetchVehicles();
-      closeModal();
-    } catch (err) { setError(err.message); }
-  };
-
-  const handleEdit = (vehicle) => {
-    setEditing(vehicle);
-    setForm({
-      plate_number: vehicle.plate_number,
-      route: vehicle.route || "",
-      status: vehicle.status,
-      active_driver: vehicle.active_driver,
-    });
-    setRouteMode("select");
-    setNewOrigin("");
-    setRouteError("");
-    setIsModalOpen(true);
-  };
-
-  const handleAdd = () => {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setRouteMode("select");
-    setNewOrigin("");
-    setRouteError("");
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setRouteMode("select");
-    setNewOrigin("");
-    setRouteError("");
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this vehicle record?")) return;
-    try {
-      await apiService.deleteVehicle(id);
-      fetchVehicles();
-    } catch (err) { setError(err.message); }
-  };
-
-  const activeDrivers = drivers.filter((d) => d.status === "ACTIVE");
-  const selectedRoute = routes.find((r) => r.id === form.route || r.id === Number(form.route));
-
   const RouteField = () => (
     <Field label="Route">
       {routeMode === "select" && (
@@ -184,21 +117,42 @@ function Vehicle() {
           <select
             className="veh-select"
             value={form.route}
-            onChange={(e) => setForm({ ...form, route: e.target.value ? Number(e.target.value) : "" })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                route: e.target.value ? Number(e.target.value) : "",
+              })
+            }
           >
             <option value="">— Select a route —</option>
-            {routes.filter((r) => r.is_active).map((r) => (
-              <option key={r.id} value={r.id}>{r.full_name}</option>
-            ))}
+            {routes
+              .filter((r) => r.is_active)
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.full_name}
+                </option>
+              ))}
           </select>
           <div className="veh-route-actions">
-            <button type="button" className="veh-text-btn veh-text-btn--navy"
-              onClick={() => { setRouteMode("new"); setNewOrigin(""); }}>
+            <button
+              type="button"
+              className="veh-text-btn veh-text-btn--navy"
+              onClick={() => {
+                setRouteMode("new");
+                setNewOrigin("");
+              }}
+            >
               + Add new route
             </button>
             {editing && form.route && (
-              <button type="button" className="veh-text-btn veh-text-btn--gold"
-                onClick={() => { setRouteMode("edit"); setNewOrigin(selectedRoute?.origin ?? ""); }}>
+              <button
+                type="button"
+                className="veh-text-btn veh-text-btn--gold"
+                onClick={() => {
+                  setRouteMode("edit");
+                  setNewOrigin(selectedRoute?.origin ?? "");
+                }}
+              >
                 Edit this route's origin
               </button>
             )}
@@ -220,10 +174,17 @@ function Vehicle() {
             <span className="veh-route-dest">— {DESTINATION}</span>
           </div>
           <p className="veh-field-hint">
-            Destination is always <strong>{DESTINATION}</strong>. Enter the origin only.
+            Destination is always <strong>{DESTINATION}</strong>. Enter the
+            origin only.
           </p>
-          <button type="button" className="veh-text-btn veh-text-btn--navy"
-            onClick={() => { setRouteMode("select"); setNewOrigin(""); }}>
+          <button
+            type="button"
+            className="veh-text-btn veh-text-btn--navy"
+            onClick={() => {
+              setRouteMode("select");
+              setNewOrigin("");
+            }}
+          >
             ← {routeMode === "edit" ? "Cancel edit" : "Back to route list"}
           </button>
         </>
@@ -232,7 +193,6 @@ function Vehicle() {
       {routeError && <p className="veh-field-error">{routeError}</p>}
     </Field>
   );
->>>>>>> c6d2a076361dca3ff130e054e938dd764dda7b7e
 
   return (
     <div className="veh-page">
