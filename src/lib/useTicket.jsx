@@ -168,23 +168,16 @@ export function useTicket() {
     }
 
     // Vehicle must be AVAILABLE
-    if (selectedVehicle.status !== "AVAILABLE") {
+    if (!["AVAILABLE", "DISPATCHED"].includes(selectedVehicle.status)) {
       setIssueError(
         `Vehicle is currently ${selectedVehicle.status} and cannot be ticketed.`,
       );
       return;
     }
+
     // Driver must be ACTIVE
     if (selectedDriver.status !== "ACTIVE") {
       setIssueError("Selected driver is not active and cannot be assigned.");
-      return;
-    }
-    if (OperationsService.isVehicleBusy(selectedVehicle.id, tickets)) {
-      setIssueError("This vehicle already has an active ticket.");
-      return;
-    }
-    if (OperationsService.isDriverBusy(selectedDriver.id, tickets, vehicles)) {
-      setIssueError("This driver is already assigned to an active ticket.");
       return;
     }
 
@@ -204,8 +197,14 @@ export function useTicket() {
         is_late: isLate,
         intended_batch: isLate ? SHIFTS.BATCH_1.name : "",
       });
+
+      await apiService.patch(`/vehicles/${selectedVehicle.id}/`, {
+        status: "QUEUED",
+      });
+
       setSuccessMessage(`Ticket ${newTicket.id} issued successfully.`);
       fetchTickets();
+      fetchVehicles();
       setSelectedVehicle(null);
       setSelectedDriver(null);
       setShowDriverModal(false);
@@ -222,22 +221,8 @@ export function useTicket() {
   // Computed values
   const availableVehicles = useMemo(
     () =>
-      vehicles.filter(
-        (v) =>
-          v.status === "AVAILABLE" &&
-          !OperationsService.isVehicleBusy(v.id, tickets),
-      ),
-    [vehicles, tickets],
-  );
-
-  const activeDrivers = useMemo(
-    () =>
-      drivers.filter(
-        (d) =>
-          d.status === "ACTIVE" &&
-          !OperationsService.isDriverBusy(d.id, tickets, vehicles),
-      ),
-    [drivers, tickets, vehicles],
+      vehicles.filter((v) => ["AVAILABLE", "DISPATCHED"].includes(v.status)),
+    [vehicles],
   );
 
   return {
@@ -264,7 +249,6 @@ export function useTicket() {
     setOverrideMissedBatch,
     // Computed
     availableVehicles,
-    activeDrivers,
     // Actions
     fetchTickets,
     handleVehicleChange,

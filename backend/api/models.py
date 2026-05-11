@@ -65,9 +65,9 @@ class Route(models.Model):
 class Vehicle(models.Model):
     STATUS_CHOICES = [
         ('AVAILABLE', 'Available'),
-        ('ON_TRIP', 'On Trip'),
+        ('DISPATCHED', 'Dispatched'),
         ('MAINTENANCE', 'Maintenance'),
-        ('DORMANT', 'Dormant'),
+        ('QUEUED', 'Queued'),
     ]
 
     id = models.AutoField(primary_key=True)   
