@@ -1,6 +1,6 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet, DriverViewSet, VehicleViewSet, RouteViewSet, TicketViewSet, CurrentUserView
+from .views import UserViewSet, DriverViewSet, VehicleViewSet, RouteViewSet, TicketViewSet, CurrentUserView, TicketPriceViewSet
 from .views import report_summary, report_collections, report_daily_chart, transaction_logs, dashboard_stats, public_queue,vehicle_records,driver_records, server_time, issue_late_ticket
 
 router = DefaultRouter()
@@ -9,6 +9,7 @@ router.register(r'drivers', DriverViewSet)
 router.register(r'routes', RouteViewSet)
 router.register(r'vehicles', VehicleViewSet)
 router.register(r'tickets', TicketViewSet)
+router.register(r'ticketPrice', TicketPriceViewSet)
 
 urlpatterns = [
     path("tickets/late/", issue_late_ticket),

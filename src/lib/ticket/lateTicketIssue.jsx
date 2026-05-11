@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { apiService } from "../api-service";
 import { SHIFTS } from "../constants";
 
-const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
+const LateTicketIssue = ({ vehicles, drivers, ticketFee, onClose }) => {
   const [lateDate, setLateDate] = useState("");
   const [lateBatch, setLateBatch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -42,6 +42,7 @@ const LateTicketIssue = ({ vehicles, drivers, onClose }) => {
       is_late: true,
       intended_batch: lateBatch,
       issued_at: new Date(lateDate).toISOString(),
+      collection_amount: ticketFee
     };
     try {
       await apiService.post("/tickets/late/", payload);

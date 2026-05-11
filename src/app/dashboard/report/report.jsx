@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
-import { TICKET_FEE } from "../../../lib/constants";
 import { exportPDF } from "../../../lib/report/exportPDF";
 import { DataTable } from "../../../components/ui/dataTable";
 import {

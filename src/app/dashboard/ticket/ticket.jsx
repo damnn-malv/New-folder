@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useTicket, statusColor, formatTime } from "../../../lib/useTicket";
-import LateTicketIssue from "../../../lib/collection/lateTicketIssue";
+import LateTicketIssue from "../../../lib/ticket/lateTicketIssue";
+import TicketPriceModal from "../../../lib/ticket/ticketPriceModal";
 import "../../../styles/Ticket.css";
-import { SHIFTS } from "../../../lib/constants";
 
 function Ticket() {
   const {
@@ -11,23 +11,33 @@ function Ticket() {
     setSearchTerm,
     loading,
     error,
+
     vehicles,
     drivers,
     selectedVehicle,
     selectedDriver,
     showDriverModal,
     setShowDriverModal,
+
     issuingTicket,
     successMessage,
     issueError,
-    missedBatchWarning,
-    overrideMissedBatch,
-    setOverrideMissedBatch,
+
     availableVehicles,
     activeDrivers,
     handleVehicleChange,
     handleDriverChange,
     handleIssueTicket,
+
+    ticketFee,
+    ticketPriceLoading,
+    ticketPriceError,
+    isTicketPriceModalOpen,
+    setIsTicketPriceModalOpen,
+    newTicketPrice,
+    setNewTicketPrice,
+    saveTicketPrice,
+    isSavingTicketPrice,
   } = useTicket();
 
   const [isLateTicketModalOpen, setIsLateTicketModalOpen] = useState(false);
@@ -45,7 +55,30 @@ function Ticket() {
             </p>
           </div>
         </div>
+        <div>
+          <button
+            type="button"
+            className="cursor-pointer"
+            onClick={() => setIsTicketPriceModalOpen(true)}
+          >
+            {ticketPriceLoading
+              ? "Loading price…"
+              : `Change ticket price (₱${ticketFee.toFixed(2)})`}
+          </button>
+        </div>
       </div>
+
+      <TicketPriceModal
+        ticketFee={ticketFee}
+        ticketPriceLoading={ticketPriceLoading}
+        ticketPriceError={ticketPriceError}
+        isTicketPriceModalOpen={isTicketPriceModalOpen}
+        setIsTicketPriceModalOpen={setIsTicketPriceModalOpen}
+        newTicketPrice={newTicketPrice}
+        setNewTicketPrice={setNewTicketPrice}
+        saveTicketPrice={saveTicketPrice}
+        isSavingTicketPrice={isSavingTicketPrice}
+      />
 
       <div className="ticket-grid">
         {/* ── Issue Ticket Card ── */}
@@ -152,45 +185,6 @@ function Ticket() {
                     </select>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Missed batch warning */}
-            {missedBatchWarning && (
-              <div className="ticket-warning">
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="ticket-warning-icon"
-                >
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                  <path d="M12 9v4" />
-                  <path d="M12 17h.01" />
-                </svg>
-                <div className="ticket-warning-body">
-                  <span className="ticket-warning-msg">
-                    {missedBatchWarning}
-                  </span>
-                  <label className="ticket-warning-check">
-                    <input
-                      type="checkbox"
-                      checked={overrideMissedBatch}
-                      onChange={(e) => setOverrideMissedBatch(e.target.checked)}
-                    />
-                    <span>
-                      Mark as late issuance — record under Batch 1{" "}
-                      <em>(optional)</em>
-                    </span>
-                  </label>
-                  <p className="ticket-warning-note">
-                    If unchecked, this ticket will count as a regular Batch 2
-                    issuance.
-                  </p>
-                </div>
               </div>
             )}
 
@@ -404,6 +398,7 @@ function Ticket() {
         <LateTicketIssue
           vehicles={vehicles}
           drivers={drivers}
+          ticketFee={ticketFee}
           onClose={() => setIsLateTicketModalOpen(false)}
         />
       )}

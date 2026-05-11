@@ -127,3 +127,21 @@ class Ticket(models.Model):
             models.Index(fields=['status', 'is_verified']),
             models.Index(fields=['issued_at', 'status']),
         ]
+
+    def save(self, *args, **kwargs):
+        if self.collection_amount is None:
+            latest_price = TicketPrice.objects.order_by('-effective_date').first()
+            if latest_price:
+                self.collection_amount = latest_price.amount
+        super().save(*args, **kwargs)
+
+class TicketPrice(models.Model):
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    effective_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-effective_date']
+
+    def __str__(self):
+        return f"{self.amount} (effective {self.effective_date})"
+

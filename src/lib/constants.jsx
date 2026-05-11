@@ -1,5 +1,3 @@
-export const TICKET_FEE = 10;
-
 export const SHIFTS = {
   BATCH_1: {
     name: "Batch 1",

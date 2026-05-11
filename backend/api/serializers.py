@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Driver, Vehicle, Route, Ticket
+from .models import User, Driver, Vehicle, Route, Ticket, TicketPrice
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -108,3 +108,8 @@ class TicketSerializer(serializers.ModelSerializer):
         driver = Driver.objects.get(id=driver_id)
         
         return Ticket.objects.create(vehicle=vehicle, driver=driver, **validated_data)
+
+class TicketPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketPrice
+        fields = ['id', 'amount', 'effective_date']

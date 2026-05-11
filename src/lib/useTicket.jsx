@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { OperationsService } from "./operations-service";
-import { TICKET_FEE, SHIFTS } from "./constants";
+import { SHIFTS } from "./constants";
 import { apiService } from "./api-service";
+import { useTicketPrice } from "./useTicketPrice";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 export const statusColor = {
@@ -64,6 +65,18 @@ export function useTicket() {
   const [issueError, setIssueError] = useState("");
   const [missedBatchWarning, setMissedBatchWarning] = useState("");
   const [overrideMissedBatch, setOverrideMissedBatch] = useState(false);
+
+  const {
+    ticketFee,
+    ticketPriceError,
+    ticketPriceLoading,
+    isTicketPriceModalOpen,
+    setIsTicketPriceModalOpen,
+    newTicketPrice,
+    setNewTicketPrice,
+    saveTicketPrice,
+    isSavingTicketPrice,
+  } = useTicketPrice();
 
   // Fetch data
   const fetchTickets = async () => {
@@ -186,17 +199,20 @@ export function useTicket() {
       const now = new Date();
       const ticketId = `TICKET-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
       const isLate = overrideMissedBatch;
-      const newTicket = await apiService.createTicket({
+      const ticketPayload = {
         id: ticketId,
         vehicle_id: selectedVehicle.id,
         driver_id: selectedDriver.id,
         route: selectedVehicle.route_detail?.full_name || "",
         status: "ISSUED",
-        collection_amount: TICKET_FEE,
         is_verified: false,
         is_late: isLate,
         intended_batch: isLate ? SHIFTS.BATCH_1.name : "",
-      });
+      };
+      if (ticketFee > 0) {
+        ticketPayload.collection_amount = ticketFee;
+      }
+      const newTicket = await apiService.createTicket(ticketPayload);
 
       await apiService.patch(`/vehicles/${selectedVehicle.id}/`, {
         status: "QUEUED",
@@ -254,5 +270,14 @@ export function useTicket() {
     handleVehicleChange,
     handleDriverChange,
     handleIssueTicket,
+    ticketFee,
+    ticketPriceLoading,
+    ticketPriceError,
+    isTicketPriceModalOpen,
+    setIsTicketPriceModalOpen,
+    newTicketPrice,
+    setNewTicketPrice,
+    saveTicketPrice,
+    isSavingTicketPrice,
   };
 }

@@ -1,5 +1,3 @@
-import { TICKET_FEE } from "../constants";
-
 const peso = (n) => {
   const num = parseFloat(n);
   if (isNaN(num)) return "₱0.00";

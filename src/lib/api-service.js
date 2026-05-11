@@ -165,6 +165,14 @@ export const apiService = {
     return this.post("/vehicles/", data);
   },
 
+  getTicketPrices() {
+    return this.get("/ticketPrice/");
+  },
+
+  createTicketPrice(data) {
+    return this.post("/ticketPrice/", data);
+  },
+
   updateVehicle(id, data) {
     return this.put(`/vehicles/${id}/`, data);
   },

@@ -1,4 +1,4 @@
-import { SHIFTS, TICKET_FEE } from "./constants";
+import { SHIFTS } from "./constants";
 import { format } from "date-fns";
 
 /**
@@ -106,7 +106,7 @@ export const OperationsService = {
         });
 
         finance[t.route].trips += 1;
-        finance[t.route].revenue += t.collection_amount || TICKET_FEE;
+        finance[t.route].revenue += Number(t.collection_amount || 0);
       }
     });
 

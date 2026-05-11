@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import datetime, timedelta, timezone as dt_timezone
-from .models import User, Driver, Vehicle, Route, Ticket
-from .serializers import UserSerializer, DriverSerializer, VehicleSerializer, RouteSerializer, TicketSerializer
+from .models import User, Driver, Vehicle, Route, Ticket, TicketPrice
+from .serializers import UserSerializer, DriverSerializer, VehicleSerializer, RouteSerializer, TicketSerializer, TicketPriceSerializer
 from rest_framework.views import APIView
 
 #viewsets
@@ -46,6 +46,10 @@ class TicketViewSet(viewsets.ModelViewSet):
             serializer.save(active_user=self.request.user)
         else:
             serializer.save()
+
+class TicketPriceViewSet(viewsets.ModelViewSet):
+    queryset = TicketPrice.objects.all()
+    serializer_class = TicketPriceSerializer
 
 
 # Batch 1 = 05:00–11:59 (PH time, UTC+8), Batch 2 = 12:00–23:59
@@ -95,7 +99,6 @@ def generate_ticket_id(issued_at, batch_name):
     else:
         next_seq = '0001'
     return f'{prefix}{next_seq}'
-
 
 def filter_collected(start_date=None, end_date=None):
     qs = Ticket.objects.filter(status='COLLECTED')

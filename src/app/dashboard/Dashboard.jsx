@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
-import { TICKET_FEE } from "../../lib/constants";
 import { apiService } from "../../lib/api-service";
 import "../../styles/Dashboard.css";
 
@@ -86,20 +85,17 @@ export default function Dashboard() {
               <StatCard
                 label="Batch 1 (AM)"
                 value={stats?.batch1_today?.count ?? 0}
-                sub={peso((stats?.batch1_today?.count ?? 0) * TICKET_FEE)}
-                
+                sub={peso(stats?.batch1_today?.total ?? 0)}
               />
               <StatCard
                 label="Batch 2 (PM)"
                 value={stats?.batch2_today?.count ?? 0}
-                sub={peso((stats?.batch2_today?.count ?? 0) * TICKET_FEE)}
-                
+                sub={peso(stats?.batch2_today?.total ?? 0)}
               />
               <StatCard
                 label="Today Total"
                 value={stats?.today_total?.count ?? 0}
-                sub={peso((stats?.today_total?.count ?? 0) * TICKET_FEE)}
-                
+                sub={peso(stats?.today_total?.total ?? 0)}
               />
             </div>
           </div>
