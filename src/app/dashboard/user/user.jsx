@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiService } from "../../../lib/api-service";
+import { useConfirm } from "../../../components/ui/ToastConfirmContext";
 import "../../../styles/User.css";
 
 const EMPTY_FORM = {
@@ -30,6 +31,8 @@ function User() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm]               = useState(EMPTY_FORM);
 
+  const showConfirm = useConfirm();
+
   useEffect(() => { fetchUsers(); }, []);
 
   const fetchUsers = async () => {
@@ -43,6 +46,9 @@ function User() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
+    const confirmed = await showConfirm(confirmMsg);
+    if (!confirmed) return;
     try {
       const payload = {
         username:   form.username   || "",
