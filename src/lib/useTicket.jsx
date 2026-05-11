@@ -167,19 +167,6 @@ export function useTicket() {
       return;
     }
 
-    // Missed Batch 1 check
-    if (
-      currentBatch === SHIFTS.BATCH_2.name &&
-      !hadBatch1TicketToday(selectedVehicle.id, tickets)
-    ) {
-      if (!missedBatchWarning) {
-        setMissedBatchWarning(
-          `Check the box below if this is a late issuance so it is recorded under Batch 1.`,
-        );
-        return;
-      }
-    }
-
     // Vehicle must be AVAILABLE
     if (selectedVehicle.status !== "AVAILABLE") {
       setIssueError(
