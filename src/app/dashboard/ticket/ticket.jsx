@@ -306,9 +306,27 @@ function Ticket() {
                       </td>
                       <td className="ticket-td-time">{formatTime(t.issued_at)}</td>
                       <td>
-                        <span className={`ticket-status ${statusColor[t.status] || "ticket-status--default"}`}>
-                          {t.status}
-                        </span>
+                        {/* Status badge */}
+                        <div className="ticket-status-cell">
+                          <span className={`ticket-status ${statusColor[t.status] || "ticket-status--default"}`}>
+                            {t.status}
+                          </span>
+                          {/* Cancellation reason tag — mirrors col-late-tag pattern */}
+                          {t.status === "CANCELLED" && t.reason && (
+                            <span
+                              className="ticket-cancel-tag"
+                              title={t.reason}
+                            >
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                                <path d="M12 9v4M12 17h.01" />
+                              </svg>
+                              {t.reason.length > 28
+                                ? t.reason.slice(0, 28) + "…"
+                                : t.reason}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
