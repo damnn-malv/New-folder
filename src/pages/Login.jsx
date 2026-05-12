@@ -78,13 +78,43 @@ import sfcMain   from '../pictures/sfc-main.jpg';
     await handleLogin(username, password, setError, navigate, showToast);
   };
 
-  // Filter next queue by selected route
-  const filteredNextQueue = selectedRoute === 'ALL'
-    ? nextQueue
-    : nextQueue.filter(v => {
-        const routeName = v.route_detail?.full_name || v.route_detail?.origin || '';
-        return routeName === selectedRoute;
-      });
+  // ── Queue logic ──────────────────────────────────────────────────────────
+  // Active Queue: /queue/ returns vehicles with ISSUED tickets.
+  // Group by route → take ONLY the first vehicle per route (front of line).
+  const activeQueueGrouped = (() => {
+    const grouped = queueData.reduce((acc, v) => {
+      const key = v.route || 'Unknown';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(v);
+      return acc;
+    }, {});
+    // Each route group → only the first vehicle goes into Active Queue
+    const result = {};
+    Object.entries(grouped).forEach(([route, vehicles]) => {
+      result[route] = vehicles[0]; // front of the line
+    });
+    return result; // { "Bacnotan - San Fernando": vehicleObj, ... }
+  })();
+
+  // Next in Queue: AVAILABLE vehicles (no issued ticket yet).
+  // Group by route → show all vehicles per route with a gap between routes.
+  const nextQueueGrouped = (() => {
+    const filtered = selectedRoute === 'ALL'
+      ? nextQueue
+      : nextQueue.filter(v => {
+          const routeName = v.route_detail?.full_name || v.route_detail?.origin || '';
+          return routeName === selectedRoute;
+        });
+    return filtered.reduce((acc, v) => {
+      const key = v.route_detail?.full_name || v.route_detail?.origin || 'No Route';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(v);
+      return acc;
+    }, {});
+  })();
+
+  const activeQueueEntries = Object.entries(activeQueueGrouped);
+  const nextQueueEntries   = Object.entries(nextQueueGrouped);
 
   return (
     <div className="lp-root" style={{ backgroundImage: `url(${sfcMain})` }}>
@@ -188,7 +218,7 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                 <div className="lp-spinner" />
                 <p>Loading queue data…</p>
               </div>
-            ) : queueData.length === 0 ? (
+            ) : activeQueueEntries.length === 0 ? (
               <div className="lp-queue-empty">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
                   <rect x="1" y="3" width="15" height="13" rx="1"/>
@@ -211,18 +241,37 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                     </tr>
                   </thead>
                   <tbody>
-                    {queueData.map(v => (
-                      <tr key={v.id} className={v.status === 'On Trip' ? 'lp-row--trip' : ''}>
-                        <td><span className="lp-plate">{v.plate_number}</span></td>
-                        <td>{v.driver}</td>
-                        <td>{v.route}</td>
-                        <td>
-                          <span className={`lp-status ${v.status === 'On Trip' ? 'lp-status--trip' : 'lp-status--available'}`}>
-                            {v.status}
-                          </span>
-                        </td>
-                        <td className="lp-td--time">{v.departure_time}</td>
-                      </tr>
+                    {activeQueueEntries.map(([route, v], groupIdx) => (
+                      <React.Fragment key={route}>
+                        {/* Gap spacer between route groups */}
+                        {groupIdx > 0 && (
+                          <tr className="lp-row--gap" aria-hidden="true">
+                            <td colSpan={5} />
+                          </tr>
+                        )}
+                        {/* Route label row */}
+                        <tr className="lp-row--route-label">
+                          <td colSpan={5}>
+                            <span className="lp-route-label-badge lp-route-label-badge--active">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                                <path d="M3 12h18M13 6l6 6-6 6"/>
+                              </svg>
+                              {route}
+                            </span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><span className="lp-plate">{v.plate_number}</span></td>
+                          <td>{v.driver || <span className="lp-na">Unassigned</span>}</td>
+                          <td>{v.route || <span className="lp-na">No route</span>}</td>
+                          <td>
+                            <span className="lp-status lp-status--available">
+                              {v.status || 'Queued'}
+                            </span>
+                          </td>
+                          <td className="lp-td--time">{v.departure_time || '—'}</td>
+                        </tr>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -261,7 +310,7 @@ import sfcMain   from '../pictures/sfc-main.jpg';
           </div>
 
           <div className="lp-queue-card lp-queue-card--next">
-            {filteredNextQueue.length === 0 ? (
+            {nextQueueEntries.length === 0 ? (
               <div className="lp-queue-empty">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
                   <rect x="1" y="3" width="15" height="13" rx="1"/>
@@ -284,14 +333,35 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredNextQueue.map((v, idx) => (
-                      <tr key={v.id}>
-                        <td className="lp-td--num">{idx + 1}</td>
-                        <td><span className="lp-plate">{v.plate_number}</span></td>
-                        <td>{v.route_detail?.full_name || v.route_detail?.origin || <span className="lp-na">No route</span>}</td>
-                        <td>{v.active_driver_name || <span className="lp-na">Unassigned</span>}</td>
-                        <td><span className="lp-status lp-status--available">Available</span></td>
-                      </tr>
+                    {nextQueueEntries.map(([route, vehicles], groupIdx) => (
+                      <React.Fragment key={route}>
+                        {/* Gap spacer between route groups */}
+                        {groupIdx > 0 && (
+                          <tr className="lp-row--gap" aria-hidden="true">
+                            <td colSpan={5} />
+                          </tr>
+                        )}
+                        {/* Route label row */}
+                        <tr className="lp-row--route-label">
+                          <td colSpan={5}>
+                            <span className="lp-route-label-badge lp-route-label-badge--next">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                                <path d="M3 12h18M13 6l6 6-6 6"/>
+                              </svg>
+                              {route}
+                            </span>
+                          </td>
+                        </tr>
+                        {vehicles.map((v, idx) => (
+                          <tr key={v.id}>
+                            <td className="lp-td--num">{idx + 1}</td>
+                            <td><span className="lp-plate">{v.plate_number}</span></td>
+                            <td>{v.route_detail?.full_name || v.route_detail?.origin || <span className="lp-na">No route</span>}</td>
+                            <td>{v.active_driver_name || <span className="lp-na">Unassigned</span>}</td>
+                            <td><span className="lp-status lp-status--available">Available</span></td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
