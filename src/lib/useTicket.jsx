@@ -6,10 +6,11 @@ import { useTicketPrice } from "./useTicketPrice";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 export const statusColor = {
-  ISSUED: "bg-yellow-100 text-yellow-800",
-  DISPATCHED: "bg-blue-100 text-blue-800",
-  COLLECTED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-800",
+  ISSUED:     "ticket-status--issued",
+  DISPATCHED: "ticket-status--dispatched",
+  COLLECTED:  "ticket-status--collected",
+  CANCELLED:  "ticket-status--cancelled",
+  RETURNED:   "ticket-status--returned",
 };
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
