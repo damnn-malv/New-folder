@@ -126,7 +126,7 @@ function Ticket() {
                 </select>
                 {vehicles.length > availableVehicles.length && (
                   <p className="ticket-field-hint">
-                    {vehicles.length - availableVehicles.length} vehicle(s) excluded (On Trip / Maintenance / Has Active Ticket).
+                    {vehicles.length - availableVehicles.length} vehicle(s) excluded (Maintenance / Has Active Ticket).
                   </p>
                 )}
               </div>
