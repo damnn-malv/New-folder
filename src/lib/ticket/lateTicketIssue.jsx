@@ -47,6 +47,7 @@ const LateTicketIssue = ({ vehicles, drivers, ticketFee, onClose }) => {
     try {
       await apiService.post("/tickets/late/", payload);
       alert("Late ticket issued successfully!");
+      window.location.reload();
     } catch (error) {
       if (error.response && error.response.data) {
         alert("Server rejected fields: " + JSON.stringify(error.response.data));

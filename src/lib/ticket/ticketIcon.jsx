@@ -158,7 +158,3 @@ export function CancelIcon({ className }) {
     </svg>
   );
 }
-
-export function Blank({ className }) {
-  return null;
-}
