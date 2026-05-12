@@ -125,7 +125,7 @@ function Driver() {
                         </span>
                         {isDriverOnActiveTicket(driver.id) && (
                           <span className="drv-status drv-status--duty">
-                            On Duty
+                            On Queue
                           </span>
                         )}
                       </div>
