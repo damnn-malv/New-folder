@@ -486,6 +486,45 @@
   cursor: not-allowed;
 }
 
+/* ── Confirmation Modal ── */
+.col-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.col-confirm-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.col-confirm-btn--cancel {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.col-confirm-btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--border-soft);
+}
+
+.col-confirm-btn--confirm {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.col-confirm-btn--confirm:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
 /* ── Pagination ── */
 .col-pagination {
   display: flex;

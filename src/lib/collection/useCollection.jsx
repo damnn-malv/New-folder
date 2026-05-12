@@ -57,33 +57,13 @@ export function useCollection() {
     }
   };
 
-  const isBatchVerifiable = (batchKey) => {
-    const now = new Date();
-    const hour = now.getHours();
-    const normalizedKey = batchKey.toLowerCase().replace(" ", "");
-    const verifiedDate = verifiedBatches[normalizedKey];
-    const today = getTodayDateString(now);
-
-    if (verifiedDate === today) return false;
-
-    if (batchKey === "Batch 1") {
-      return hour >= 15;
-    } else if (batchKey === "Batch 2") {
-      return hour >= 21;
-    }
-    return false;
+  const isBatchVerifiable = () => {
+    return true;
   };
 
   useEffect(() => {
     loadVerifiedBatches();
     fetchTickets();
-    
-    // Refresh button state every minute to catch time-based unlocks
-    const interval = setInterval(() => {
-      setVerifiedBatches({ ...verifiedBatches });
-    }, 60000);
-    
-    return () => clearInterval(interval);
   }, []);
 
   const fetchTickets = async () => {
@@ -275,28 +255,12 @@ export const BatchCard = ({
         type="button"
         className="bc-verify-btn"
         onClick={() => onVerify(batchKey)}
-        disabled={verifyingBatch === batchKey || !isVerifiable}
+        disabled={verifyingBatch === batchKey}
       >
         {verifyingBatch === batchKey ? (
           <>
             <span className="bc-spinner" />
             Verifying…
-          </>
-        ) : !isVerifiable ? (
-          <>
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            Not Available
           </>
         ) : (
           <>

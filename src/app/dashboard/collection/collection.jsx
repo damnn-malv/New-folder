@@ -26,6 +26,7 @@ function Collection({ userRole }) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isUnverifiedModalOpen, setIsUnverifiedModalOpen] = useState(false);
+  const [confirmingBatchKey, setConfirmingBatchKey] = useState(null);
   const rowsPerPage = 15;
   const unverifiedTickets = tickets.filter(
     (t) => !t.is_verified && t.status !== "CANCELLED",
@@ -34,6 +35,17 @@ function Collection({ userRole }) {
   const endIndex = startIndex + rowsPerPage;
   const currentTickets = filteredTickets.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredTickets.length / rowsPerPage);
+
+  const handleVerifyBatchWithConfirm = (batchKey) => {
+    setConfirmingBatchKey(batchKey);
+  };
+
+  const confirmBatchVerification = () => {
+    if (confirmingBatchKey) {
+      handleVerifyBatch(confirmingBatchKey);
+      setConfirmingBatchKey(null);
+    }
+  };
 
   return (
     <div className="col-page">
@@ -93,7 +105,7 @@ function Collection({ userRole }) {
             label="Batch 1 — Morning Shift (6:00 AM – 3:00 PM)"
             stats={batchStats?.batch1}
             batchKey="Batch 1"
-            onVerify={handleVerifyBatch}
+            onVerify={handleVerifyBatchWithConfirm}
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 1")}
           />
@@ -101,11 +113,11 @@ function Collection({ userRole }) {
             label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)"
             stats={batchStats?.batch2}
             batchKey="Batch 2"
-            onVerify={handleVerifyBatch}
+            onVerify={handleVerifyBatchWithConfirm}
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 2")}
           />
-          {userRole === "ADMIN" && (
+          {["ADMIN", "SUPERVISOR"].includes(userRole) && (
             <button
               type="button"
               className="col-override-btn"
@@ -305,6 +317,50 @@ function Collection({ userRole }) {
           )}
         </div>
       </div>
+
+      {confirmingBatchKey && (
+        <div
+          className="col-overlay"
+          onClick={() => setConfirmingBatchKey(null)}
+        >
+          <div className="col-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="col-modal-header">
+              <div>
+                <h2 className="col-modal-title">Confirm Verification</h2>
+                <p className="col-modal-subtitle">
+                  Are you sure you want to verify all pending tickets in {confirmingBatchKey}?
+                </p>
+              </div>
+              <button
+                type="button"
+                className="col-modal-close"
+                onClick={() => setConfirmingBatchKey(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="col-modal-body">
+              <div className="col-confirm-actions">
+                <button
+                  type="button"
+                  className="col-confirm-btn col-confirm-btn--cancel"
+                  onClick={() => setConfirmingBatchKey(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="col-confirm-btn col-confirm-btn--confirm"
+                  onClick={confirmBatchVerification}
+                >
+                  Yes, Verify
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isUnverifiedModalOpen && (
         <div
