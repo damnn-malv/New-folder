@@ -3,16 +3,16 @@ import { apiService } from "../../../lib/api-service";
 import "../../../styles/Dispatch.css";
 
 function Dispatch() {
-  const [vehicles, setVehicles]   = useState([]);
-  const [tickets, setTickets]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
+  const [vehicles, setVehicles] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // ── Cancel modal state ──────────────────────────────────────────────────
-  const [cancelTarget, setCancelTarget]     = useState(null); // vehicle being cancelled
-  const [cancelReason, setCancelReason]     = useState("");
-  const [cancelError, setCancelError]       = useState("");
-  const [cancelling, setCancelling]         = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null); // vehicle being cancelled
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -55,12 +55,16 @@ function Dispatch() {
   // ── Dispatch ────────────────────────────────────────────────────────────
   const handleDispatch = async (vehicle) => {
     try {
-      await apiService.patch(`/vehicles/${vehicle.id}/`, { status: "DISPATCHED" });
+      await apiService.patch(`/vehicles/${vehicle.id}/`, {
+        status: "AVAILABLE",
+      });
       const activeTicket = tickets.find(
         (t) => t.vehicle?.id === vehicle.id && t.status === "ISSUED",
       );
       if (activeTicket) {
-        await apiService.patch(`/tickets/${activeTicket.id}/`, { status: "DISPATCHED" });
+        await apiService.patch(`/tickets/${activeTicket.id}/`, {
+          status: "DISPATCHED",
+        });
       }
       await fetchData();
     } catch (err) {
@@ -111,7 +115,9 @@ function Dispatch() {
       await fetchData();
       closeCancelModal();
     } catch (err) {
-      setCancelError(err.message || "Failed to cancel ticket. Please try again.");
+      setCancelError(
+        err.message || "Failed to cancel ticket. Please try again.",
+      );
     } finally {
       setCancelling(false);
     }
@@ -119,14 +125,15 @@ function Dispatch() {
 
   return (
     <div className="dispatch-page">
-
       {/* ── Header ── */}
       <div className="dispatch-header">
         <div className="dispatch-header-left">
           <div className="dispatch-header-accent" />
           <div>
             <h1 className="dispatch-title">Active Terminal Queue</h1>
-            <p className="dispatch-subtitle">Dispatch control and active trip monitoring</p>
+            <p className="dispatch-subtitle">
+              Dispatch control and active trip monitoring
+            </p>
           </div>
         </div>
         <div className="dispatch-header-badges">
@@ -139,7 +146,14 @@ function Dispatch() {
 
       {error && (
         <div className="dispatch-error">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -174,14 +188,24 @@ function Dispatch() {
                   <tr>
                     <td colSpan="4" className="dispatch-table-empty">
                       <div className="dispatch-loading-dots">
-                        <div /><div /><div />
+                        <div />
+                        <div />
+                        <div />
                       </div>
                     </td>
                   </tr>
                 ) : queue.length === 0 ? (
                   <tr>
                     <td colSpan="4" className="dispatch-table-empty">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        opacity="0.3"
+                      >
                         <rect x="1" y="3" width="15" height="13" rx="1" />
                         <path d="M16 8h4l3 3v5h-7V8z" />
                         <circle cx="5.5" cy="18.5" r="2.5" />
@@ -194,9 +218,13 @@ function Dispatch() {
                   queue.map((vehicle) => (
                     <tr key={vehicle.id} className="dispatch-table-row">
                       <td>
-                        <span className="dispatch-plate">{vehicle.plate_number}</span>
+                        <span className="dispatch-plate">
+                          {vehicle.plate_number}
+                        </span>
                       </td>
-                      <td className="dispatch-td-name">{getDriverName(vehicle)}</td>
+                      <td className="dispatch-td-name">
+                        {getDriverName(vehicle)}
+                      </td>
                       <td className="dispatch-td-route">
                         {vehicle.route_detail?.full_name || "—"}
                       </td>
@@ -206,7 +234,14 @@ function Dispatch() {
                             className="dispatch-btn dispatch-btn--dispatch"
                             onClick={() => handleDispatch(vehicle)}
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                            >
                               <path d="M5 12h14M12 5l7 7-7 7" />
                             </svg>
                             Dispatch
@@ -215,7 +250,14 @@ function Dispatch() {
                             className="dispatch-btn dispatch-btn--cancel"
                             onClick={() => openCancelModal(vehicle)}
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                            >
                               <path d="M18 6 6 18M6 6l12 12" />
                             </svg>
                             Cancel
@@ -235,11 +277,17 @@ function Dispatch() {
       {cancelTarget && (
         <div className="dispatch-overlay" onClick={closeCancelModal}>
           <div className="dispatch-modal" onClick={(e) => e.stopPropagation()}>
-
             {/* Modal Header */}
             <div className="dispatch-modal-header">
               <div className="dispatch-modal-header-left">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="2.2"
+                >
                   <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
@@ -251,7 +299,14 @@ function Dispatch() {
                 disabled={cancelling}
                 aria-label="Close"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
               </button>
@@ -262,9 +317,18 @@ function Dispatch() {
               {/* Vehicle info summary */}
               <div className="dispatch-cancel-vehicle">
                 <div className="dispatch-cancel-vehicle__row">
-                  <span className="dispatch-plate">{cancelTarget.plate_number}</span>
+                  <span className="dispatch-plate">
+                    {cancelTarget.plate_number}
+                  </span>
                   <span className="dispatch-cancel-vehicle__route">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
@@ -278,19 +342,30 @@ function Dispatch() {
 
               {/* Warning notice */}
               <div className="dispatch-cancel-warning">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ flexShrink: 0, marginTop: 1 }}
+                >
                   <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
                   <path d="M12 9v4M12 17h.01" />
                 </svg>
                 <span>
-                  This will cancel the issued ticket and return the vehicle to <strong>Available</strong> status. This action cannot be undone.
+                  This will cancel the issued ticket and return the vehicle to{" "}
+                  <strong>Available</strong> status. This action cannot be
+                  undone.
                 </span>
               </div>
 
               {/* Reason textarea */}
               <div className="dispatch-modal-field">
                 <label className="dispatch-modal-label">
-                  Reason for Cancellation <span className="dispatch-modal-required">*</span>
+                  Reason for Cancellation{" "}
+                  <span className="dispatch-modal-required">*</span>
                 </label>
                 <textarea
                   className="dispatch-modal-textarea"
@@ -304,7 +379,9 @@ function Dispatch() {
                   disabled={cancelling}
                 />
                 {cancelError && (
-                  <span className="dispatch-modal-field-error">{cancelError}</span>
+                  <span className="dispatch-modal-field-error">
+                    {cancelError}
+                  </span>
                 )}
               </div>
             </div>
@@ -327,14 +404,29 @@ function Dispatch() {
               >
                 {cancelling ? (
                   <>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="dispatch-modal-spin">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      className="dispatch-modal-spin"
+                    >
                       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                     </svg>
                     Cancelling…
                   </>
                 ) : (
                   <>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
                       <path d="M18 6 6 18M6 6l12 12" />
                     </svg>
                     Confirm Cancel
@@ -350,4 +442,3 @@ function Dispatch() {
 }
 
 export default Dispatch;
-
