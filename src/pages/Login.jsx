@@ -8,36 +8,96 @@ import { useToast } from '../components/ui/ToastConfirmContext';
 import sfcLogo   from '../pictures/sfc-nobg-logo.png';
 import sfcBanner from '../pictures/sfc-nobg-banner.png';
 import sfcMain   from '../pictures/sfc-main.jpg';
- function Login() {
+
+function Login() {
   const [showLoginForm,  setShowLoginForm]  = useState(false);
   const [username,       setUsername]       = useState("");
   const [password,       setPassword]       = useState("");
   const [error,          setError]          = useState("");
-  const [queueData,      setQueueData]      = useState([]);
-  const [nextQueue,      setNextQueue]      = useState([]);
+  const [activeQueue,    setActiveQueue]    = useState([]); // index 0 per route group
+  const [nextQueue,      setNextQueue]      = useState([]); // index 1+ per route group
   const [routes,         setRoutes]         = useState([]);
   const [selectedRoute,  setSelectedRoute]  = useState("ALL");
   const [loadingQueue,   setLoadingQueue]   = useState(false);
   const [refreshing,     setRefreshing]     = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [lastUpdated,    setLastUpdated]    = useState(null);
 
   const navigate  = useNavigate();
   const showToast = useToast();
 
   useEffect(() => {
     loadQueue();
-    loadNextQueue();
     loadRoutes();
     const handleScroll = () => setHeaderScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // ── Core queue loader ──────────────────────────────────────────────────────
+  // Logic: fetch vehicles + tickets together.
+  // A vehicle qualifies for the queue if:
+  //   - status === 'QUEUED'
+  //   - not archived
+  //   - has at least one ticket that is ISSUED and not late
+  // Then group by route → index 0 per group = Active Queue (next to be dispatched)
+  //                      → index 1+ per group = Next in Queue
   const loadQueue = async () => {
     setLoadingQueue(true);
     try {
-      const data = await apiService.get('/queue/');
-      setQueueData(Array.isArray(data) ? data : []);
+      const [vehicleData, ticketData] = await Promise.all([
+        apiService.getVehicles(),
+        apiService.getTickets(),
+      ]);
+
+      const vehicles = Array.isArray(vehicleData) ? vehicleData : [];
+      const tickets  = Array.isArray(ticketData)  ? ticketData  : [];
+
+      // Filter: only QUEUED, non-archived vehicles that have an active ISSUED ticket
+      const queuedVehicles = vehicles.filter(
+        (v) =>
+          v.status === 'QUEUED' &&
+          !v.is_archived &&
+          tickets.some(
+            (t) =>
+              t.vehicle?.id === v.id &&
+              t.status === 'ISSUED' &&
+              !t.is_late,
+          ),
+      );
+
+      // Attach the relevant issued ticket to each vehicle for easy access (e.g. departure_time)
+      const withTicket = queuedVehicles.map((v) => {
+        const ticket = tickets.find(
+          (t) =>
+            t.vehicle?.id === v.id &&
+            t.status === 'ISSUED' &&
+            !t.is_late,
+        );
+        return { ...v, _ticket: ticket || null };
+      });
+
+      // Group by full route name (e.g. "Lingsat - San Fernando")
+      const groupedByRoute = withTicket.reduce((acc, v) => {
+        const key = v.route_detail?.full_name || v.route_detail?.origin || 'No Route';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(v);
+        return acc;
+      }, {});
+
+      // Split: first vehicle per group → Active Queue; rest → Next in Queue
+      const active = [];
+      const next   = [];
+      Object.values(groupedByRoute).forEach((routeVehicles) => {
+        if (routeVehicles.length > 0) {
+          active.push(routeVehicles[0]);
+          next.push(...routeVehicles.slice(1));
+        }
+      });
+
+      setActiveQueue(active);
+      setNextQueue(next);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to load queue:', err);
     } finally {
@@ -45,20 +105,10 @@ import sfcMain   from '../pictures/sfc-main.jpg';
     }
   };
 
-  const loadNextQueue = async () => {
-    try {
-      // Available vehicles not currently dispatched
-      const data = await apiService.getVehicles();
-      setNextQueue(Array.isArray(data) ? data.filter(v => v.status === 'AVAILABLE') : []);
-    } catch (err) {
-      console.error('Failed to load next queue:', err);
-    }
-  };
-
   const loadRoutes = async () => {
     try {
       const data = await apiService.getRoutes();
-      setRoutes(Array.isArray(data) ? data.filter(r => r.is_active) : []);
+      setRoutes(Array.isArray(data) ? data.filter((r) => r.is_active) : []);
     } catch (err) {
       console.error('Failed to load routes:', err);
     }
@@ -67,7 +117,7 @@ import sfcMain   from '../pictures/sfc-main.jpg';
   const handleRefreshQueue = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([loadQueue(), loadNextQueue(), loadRoutes()]);
+      await Promise.all([loadQueue(), loadRoutes()]);
     } finally {
       setRefreshing(false);
     }
@@ -78,43 +128,32 @@ import sfcMain   from '../pictures/sfc-main.jpg';
     await handleLogin(username, password, setError, navigate, showToast);
   };
 
-  // ── Queue logic ──────────────────────────────────────────────────────────
-  // Active Queue: /queue/ returns vehicles with ISSUED tickets.
-  // Group by route → take ONLY the first vehicle per route (front of line).
-  const activeQueueGrouped = (() => {
-    const grouped = queueData.reduce((acc, v) => {
-      const key = v.route || 'Unknown';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(v);
-      return acc;
-    }, {});
-    // Each route group → only the first vehicle goes into Active Queue
-    const result = {};
-    Object.entries(grouped).forEach(([route, vehicles]) => {
-      result[route] = vehicles[0]; // front of the line
-    });
-    return result; // { "Bacnotan - San Fernando": vehicleObj, ... }
-  })();
+  // ── Derived display data ───────────────────────────────────────────────────
 
-  // Next in Queue: AVAILABLE vehicles (no issued ticket yet).
-  // Group by route → show all vehicles per route with a gap between routes.
-  const nextQueueGrouped = (() => {
-    const filtered = selectedRoute === 'ALL'
-      ? nextQueue
-      : nextQueue.filter(v => {
-          const routeName = v.route_detail?.full_name || v.route_detail?.origin || '';
-          return routeName === selectedRoute;
-        });
-    return filtered.reduce((acc, v) => {
-      const key = v.route_detail?.full_name || v.route_detail?.origin || 'No Route';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(v);
-      return acc;
-    }, {});
-  })();
+  // Active Queue: group by route for gap-separated display
+  const activeGrouped = activeQueue.reduce((acc, v) => {
+    const key = v.route_detail?.full_name || v.route_detail?.origin || 'No Route';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(v);
+    return acc;
+  }, {});
+  const activeGroupEntries = Object.entries(activeGrouped);
 
-  const activeQueueEntries = Object.entries(activeQueueGrouped);
-  const nextQueueEntries   = Object.entries(nextQueueGrouped);
+  // Next in Queue: filter by selected route, then group by route for gap-separated display
+  const filteredNext = selectedRoute === 'ALL'
+    ? nextQueue
+    : nextQueue.filter((v) => {
+        const routeName = v.route_detail?.full_name || v.route_detail?.origin || '';
+        return routeName === selectedRoute;
+      });
+
+  const nextGrouped = filteredNext.reduce((acc, v) => {
+    const key = v.route_detail?.full_name || v.route_detail?.origin || 'No Route';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(v);
+    return acc;
+  }, {});
+  const nextGroupEntries = Object.entries(nextGrouped);
 
   return (
     <div className="lp-root" style={{ backgroundImage: `url(${sfcMain})` }}>
@@ -153,7 +192,7 @@ import sfcMain   from '../pictures/sfc-main.jpg';
       {/* ── LOGIN FORM OVERLAY ── */}
       {showLoginForm && (
         <div className="lp-login-overlay" onClick={() => { setShowLoginForm(false); setError(''); }}>
-          <div className="lp-login-modal" onClick={e => e.stopPropagation()}>
+          <div className="lp-login-modal" onClick={(e) => e.stopPropagation()}>
             <div className="lp-login-modal__brand">
               <img src={sfcLogo} alt="Logo" className="lp-login-modal__logo" style={{ borderRadius: '40px' }} />
               <h2>Staff Access</h2>
@@ -164,14 +203,14 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                 <label htmlFor="username">Username</label>
                 <input
                   id="username" type="text" placeholder="Enter your username"
-                  value={username} onChange={e => setUsername(e.target.value)} autoFocus
+                  value={username} onChange={(e) => setUsername(e.target.value)} autoFocus
                 />
               </div>
               <div className="lp-field">
                 <label htmlFor="password">Password</label>
                 <input
                   id="password" type="password" placeholder="Enter your password"
-                  value={password} onChange={e => setPassword(e.target.value)}
+                  value={password} onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               {error && <div className="lp-error">{error}</div>}
@@ -218,7 +257,7 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                 <div className="lp-spinner" />
                 <p>Loading queue data…</p>
               </div>
-            ) : activeQueueEntries.length === 0 ? (
+            ) : activeGroupEntries.length === 0 ? (
               <div className="lp-queue-empty">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
                   <rect x="1" y="3" width="15" height="13" rx="1"/>
@@ -241,8 +280,8 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                     </tr>
                   </thead>
                   <tbody>
-                    {activeQueueEntries.map(([route, v], groupIdx) => (
-                      <React.Fragment key={route}>
+                    {activeGroupEntries.map(([routeName, vehicles], groupIdx) => (
+                      <React.Fragment key={routeName}>
                         {/* Gap spacer between route groups */}
                         {groupIdx > 0 && (
                           <tr className="lp-row--gap" aria-hidden="true">
@@ -256,21 +295,28 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
                                 <path d="M3 12h18M13 6l6 6-6 6"/>
                               </svg>
-                              {route}
+                              {routeName}
                             </span>
                           </td>
                         </tr>
-                        <tr>
-                          <td><span className="lp-plate">{v.plate_number}</span></td>
-                          <td>{v.driver || <span className="lp-na">Unassigned</span>}</td>
-                          <td>{v.route || <span className="lp-na">No route</span>}</td>
-                          <td>
-                            <span className="lp-status lp-status--available">
-                              {v.status || 'Queued'}
-                            </span>
-                          </td>
-                          <td className="lp-td--time">{v.departure_time || '—'}</td>
-                        </tr>
+                        {/* Active vehicle row (always index 0 of this route group) */}
+                        {vehicles.map((v) => (
+                          <tr key={v.id}>
+                            <td><span className="lp-plate">{v.plate_number}</span></td>
+                            <td>{v.active_driver_name || <span className="lp-na">Unassigned</span>}</td>
+                            <td>{v.route_detail?.full_name || v.route_detail?.origin || <span className="lp-na">No route</span>}</td>
+                            <td>
+                              <span className="lp-status lp-status--available">
+                                {v.status}
+                              </span>
+                            </td>
+                            <td className="lp-td--time">
+                              {v._ticket?.issued_at
+                                ? new Date(v._ticket.issued_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                : '—'}
+                            </td>
+                          </tr>
+                        ))}
                       </React.Fragment>
                     ))}
                   </tbody>
@@ -278,15 +324,15 @@ import sfcMain   from '../pictures/sfc-main.jpg';
               </div>
             )}
             <div className="lp-queue-foot">
-              Last updated: {new Date().toLocaleTimeString()}
+              Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : '—'}
             </div>
           </div>
 
-          {/* ── NEXT QUEUE ── */}
+          {/* ── NEXT IN QUEUE ── */}
           <div className="lp-next-header">
             <div className="lp-board-label">
               <div className="lp-board-label__dot lp-board-label__dot--next" />
-              Next in Queue — Available Vehicles
+              Next in Queue
             </div>
 
             {/* Route filter */}
@@ -297,10 +343,10 @@ import sfcMain   from '../pictures/sfc-main.jpg';
               <select
                 className="lp-route-select"
                 value={selectedRoute}
-                onChange={e => setSelectedRoute(e.target.value)}
+                onChange={(e) => setSelectedRoute(e.target.value)}
               >
                 <option value="ALL">All Routes</option>
-                {routes.map(r => (
+                {routes.map((r) => (
                   <option key={r.id} value={r.full_name || r.origin}>
                     {r.full_name || r.origin}
                   </option>
@@ -310,7 +356,12 @@ import sfcMain   from '../pictures/sfc-main.jpg';
           </div>
 
           <div className="lp-queue-card lp-queue-card--next">
-            {nextQueueEntries.length === 0 ? (
+            {loadingQueue ? (
+              <div className="lp-queue-loading">
+                <div className="lp-spinner" />
+                <p>Loading queue data…</p>
+              </div>
+            ) : nextGroupEntries.length === 0 ? (
               <div className="lp-queue-empty">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.35">
                   <rect x="1" y="3" width="15" height="13" rx="1"/>
@@ -318,7 +369,7 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                   <circle cx="5.5" cy="18.5" r="2.5"/>
                   <circle cx="18.5" cy="18.5" r="2.5"/>
                 </svg>
-                <p>No available vehicles{selectedRoute !== 'ALL' ? ` for ${selectedRoute}` : ''}.</p>
+                <p>No vehicles in queue{selectedRoute !== 'ALL' ? ` for ${selectedRoute}` : ''}.</p>
               </div>
             ) : (
               <div className="lp-table-wrap">
@@ -327,14 +378,14 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                     <tr>
                       <th>#</th>
                       <th>Plate Number</th>
-                      <th>Route</th>
                       <th>Driver</th>
+                      <th>Route</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {nextQueueEntries.map(([route, vehicles], groupIdx) => (
-                      <React.Fragment key={route}>
+                    {nextGroupEntries.map(([routeName, vehicles], groupIdx) => (
+                      <React.Fragment key={routeName}>
                         {/* Gap spacer between route groups */}
                         {groupIdx > 0 && (
                           <tr className="lp-row--gap" aria-hidden="true">
@@ -348,17 +399,18 @@ import sfcMain   from '../pictures/sfc-main.jpg';
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ flexShrink: 0 }}>
                                 <path d="M3 12h18M13 6l6 6-6 6"/>
                               </svg>
-                              {route}
+                              {routeName}
                             </span>
                           </td>
                         </tr>
+                        {/* Remaining vehicles in this route (index 1, 2, 3 …) */}
                         {vehicles.map((v, idx) => (
                           <tr key={v.id}>
                             <td className="lp-td--num">{idx + 1}</td>
                             <td><span className="lp-plate">{v.plate_number}</span></td>
-                            <td>{v.route_detail?.full_name || v.route_detail?.origin || <span className="lp-na">No route</span>}</td>
                             <td>{v.active_driver_name || <span className="lp-na">Unassigned</span>}</td>
-                            <td><span className="lp-status lp-status--available">Available</span></td>
+                            <td>{v.route_detail?.full_name || v.route_detail?.origin || <span className="lp-na">No route</span>}</td>
+                            <td><span className="lp-status lp-status--available">{v.status}</span></td>
                           </tr>
                         ))}
                       </React.Fragment>
