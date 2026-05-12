@@ -7,7 +7,7 @@ import {
 import { OperationsService } from "../../../lib/operations-service";
 import "../../../styles/Collection.css";
 
-function Collection() {
+function Collection({ userRole }) {
   const {
     tickets,
     filteredTickets,
@@ -96,6 +96,9 @@ function Collection() {
             onVerify={handleVerifyBatch}
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 1")}
+            isVerifiable={
+              userRole !== "MANAGER" && isBatchVerifiable("Batch 1")
+            }
           />
           <BatchCard
             label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)"
@@ -104,14 +107,19 @@ function Collection() {
             onVerify={handleVerifyBatch}
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 2")}
+            isVerifiable={
+              userRole !== "MANAGER" && isBatchVerifiable("Batch 1")
+            }
           />
-          <button
-            type="button"
-            className="col-override-btn"
-            onClick={() => setIsUnverifiedModalOpen(true)}
-          >
-            Override
-          </button>
+          {userRole === "ADMIN" && (
+            <button
+              type="button"
+              className="col-override-btn"
+              onClick={() => setIsUnverifiedModalOpen(true)}
+            >
+              Override
+            </button>
+          )}
         </div>
 
         {/* ── Right: Collection Log ── */}

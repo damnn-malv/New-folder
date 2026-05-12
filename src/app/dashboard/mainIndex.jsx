@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
 import Dashboard from "./Dashboard";
-import Dispatch from './dispatch/dispatch'
+import Dispatch from "./dispatch/dispatch";
 import Ticket from "./ticket/ticket";
 import Collections from "./collection/collection";
 import Vehicles from "./vehicle/vehicle";
@@ -9,8 +9,14 @@ import Drivers from "./driver/driver";
 import StaffRegistry from "./user/user";
 import Reports from "./report/report";
 import {
-  CollectionsIcon, DashboardIcon, DispatchIcon, DriverIcon,
-  ReportIcon, TicketIcon, UserIcon, VehicleIcon,
+  CollectionsIcon,
+  DashboardIcon,
+  DispatchIcon,
+  DriverIcon,
+  ReportIcon,
+  TicketIcon,
+  UserIcon,
+  VehicleIcon,
 } from "../../components/ui/NavIcon";
 import { apiService } from "../../lib/api-service";
 import { useToast, useConfirm } from "../../components/ui/ToastConfirmContext";
@@ -28,10 +34,44 @@ const NAV_ITEMS = [
   { to: "/dashboard/Reports", label: "Reports", Icon: ReportIcon },
 ];
 
+const ROLE_NAV = {
+  ADMIN: [
+    "/dashboard",
+    "/dashboard/Dispatch",
+    "/dashboard/Ticket",
+    "/dashboard/Collections",
+    "/dashboard/Vehicles",
+    "/dashboard/Drivers",
+    "/dashboard/StaffRegistry",
+    "/dashboard/Reports",
+  ],
+  MANAGER: [
+    "/dashboard",
+    "/dashboard/Collections",
+    "/dashboard/StaffRegistry",
+    "/dashboard/Reports",
+  ],
+  SUPERVISOR: [
+    "/dashboard",
+    "/dashboard/Ticket",
+    "/dashboard/Dispatch",
+    "/dashboard/Collections",
+    "/dashboard/Reports",
+  ],
+  PERSONNEL: [
+    "/dashboard",
+    "/dashboard/Ticket",
+    "/dashboard/Dispatch",
+    "/dashboard/Reports",
+  ],
+};
+
 function mainIndex() {
   const [currentUser, setCurrentUser] = useState({});
-  const [dark, setDark] = useState(() => localStorage.getItem("theme") === "dark");
-  const showToast   = useToast();
+  const [dark, setDark] = useState(
+    () => localStorage.getItem("theme") === "dark",
+  );
+  const showToast = useToast();
   const showConfirm = useConfirm();
 
   // dark/light
@@ -49,7 +89,8 @@ function mainIndex() {
   useEffect(() => {
     let isMounted = true;
 
-    apiService.getCurrentUser()
+    apiService
+      .getCurrentUser()
       .then((user) => {
         if (isMounted) setCurrentUser(user || {});
       })
@@ -62,45 +103,44 @@ function mainIndex() {
     };
   }, []);
 
-  const userName = currentUser.first_name || currentUser.last_name
-    ? `${currentUser.first_name || ""} ${currentUser.last_name || ""}`.trim()
-    : currentUser.username || "Unknown User";
+  const userName =
+    currentUser.first_name || currentUser.last_name
+      ? `${currentUser.first_name || ""} ${currentUser.last_name || ""}`.trim()
+      : currentUser.username || "Unknown User";
 
   const userRole = currentUser.role || "Unknown Role";
-  const userInitials = userName
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase() || "US";
+  const userInitials =
+    userName
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "US";
 
   return (
     <div className="shell">
       <aside className="sidebar">
-
         {/* Brand header */}
-        <div className="sidebar-brand" >
+        <div className="sidebar-brand">
           <div className="sidebar-brand-icon">
-            <img src={sfcLogo} alt="SFC Logo" style={{width: '30px', height: '30px', borderRadius: '40px'}} />
+            <img
+              src={sfcLogo}
+              alt="SFC Logo"
+              style={{ width: "30px", height: "30px", borderRadius: "40px" }}
+            />
           </div>
           <div className="sidebar-brand-text">
-            
             <span className="sidebar-brand-name">North Central Terminal</span>
-            
           </div>
         </div>
 
         {/* Nav links */}
         <nav className="sidebar-nav">
           <div className="sidebar-nav-label">Navigation</div>
-          {NAV_ITEMS.filter(item => {
-            // Only show StaffRegistry if role is SUPERVISOR
-            if (item.to === "/dashboard/StaffRegistry" && userRole !== "SUPERVISOR") {
-              return false;
-            }
-            return true;
-          }).map(({ to, label, Icon }) => (
+          {NAV_ITEMS.filter((item) =>
+            ROLE_NAV[userRole]?.includes(item.to),
+          ).map(({ to, label, Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -126,32 +166,68 @@ function mainIndex() {
           {/* Theme toggle */}
           <button
             className="sidebar-icon-btn"
-            onClick={() => setDark(d => !d)}
+            onClick={() => setDark((d) => !d)}
             title={dark ? "Switch to light mode" : "Switch to dark mode"}
           >
             {dark ? (
               // sun icon
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4"/>
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
               </svg>
             ) : (
               // moon icon
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
               </svg>
             )}
           </button>
 
           {/* Logout */}
-          <button className="sidebar-icon-btn" onClick={async () => {
-            const ok = await showConfirm("Are you sure you want to logout?");
-            if (!ok) return;
-            showToast("Logging out...", "info");
-            setTimeout(() => apiService.logout(), 1200);
-          }} title="Logout">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+          <button
+            className="sidebar-icon-btn"
+            onClick={async () => {
+              const ok = await showConfirm("Are you sure you want to logout?");
+              if (!ok) return;
+              showToast("Logging out...", "info");
+              setTimeout(() => apiService.logout(), 1200);
+            }}
+            title="Logout"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" x2="9" y1="12" y2="12" />
             </svg>
           </button>
         </div>
@@ -163,12 +239,13 @@ function mainIndex() {
           <Route path="Dashboard" element={<Dashboard />} />
           <Route path="Dispatch" element={<Dispatch />} />
           <Route path="Ticket" element={<Ticket />} />
-          <Route path="Collections" element={<Collections />} />
+          <Route
+            path="Collections"
+            element={<Collections userRole={userRole} />}
+          />
           <Route path="Vehicles" element={<Vehicles />} />
           <Route path="Drivers" element={<Drivers />} />
-          {userRole === "SUPERVISOR" && (
-            <Route path="StaffRegistry" element={<StaffRegistry />} />
-          )}
+          <Route path="StaffRegistry" element={<StaffRegistry />} />
           <Route path="Reports" element={<Reports />} />
         </Routes>
       </main>
