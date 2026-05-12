@@ -6,11 +6,11 @@ import { useTicketPrice } from "./useTicketPrice";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 export const statusColor = {
-  ISSUED:     "ticket-status--issued",
+  ISSUED: "ticket-status--issued",
   DISPATCHED: "ticket-status--dispatched",
-  COLLECTED:  "ticket-status--collected",
-  CANCELLED:  "ticket-status--cancelled",
-  RETURNED:   "ticket-status--returned",
+  COLLECTED: "ticket-status--collected",
+  CANCELLED: "ticket-status--cancelled",
+  RETURNED: "ticket-status--returned",
 };
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
@@ -165,6 +165,16 @@ export function useTicket() {
     }
     if (!selectedDriver) {
       setIssueError("Please select a driver.");
+      return;
+    }
+
+    const driverHasActiveTicket = tickets.some(
+      (t) =>
+        t.driver?.id === selectedDriver.id && ["ISSUED"].includes(t.status),
+    );
+
+    if (driverHasActiveTicket) {
+      setIssueError("This driver already has an active ticket.");
       return;
     }
 
