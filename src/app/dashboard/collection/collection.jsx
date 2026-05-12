@@ -28,7 +28,7 @@ function Collection({ userRole }) {
   const [isUnverifiedModalOpen, setIsUnverifiedModalOpen] = useState(false);
   const rowsPerPage = 15;
   const unverifiedTickets = tickets.filter(
-    (ticket) => !ticket.is_verified && ticket.status !== "CANCELLED",
+    (t) => !t.is_verified && t.status !== "CANCELLED",
   );
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
