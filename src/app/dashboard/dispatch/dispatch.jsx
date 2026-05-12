@@ -27,13 +27,12 @@ function Dispatch() {
     fetchData();
   }, []);
 
-  const queue = vehicles.filter(
-    (v) =>
-      v.status === "QUEUED" &&
-      !v.is_archived &&
-      tickets.some(
-        (t) => t.vehicle?.id === v.id && t.status === "ISSUED" && !t.is_late,
-      ),
+  const queue = tickets.filter(
+    (t) =>
+      t.status === "ISSUED" &&
+      !t.is_late &&
+      !t.vehicle.is_archived &&
+      t.vehicle.status !== "MAINTENANCE", // 🚦 exclude maintenance vehicles
   );
 
   const getDriverName = (vehicle) => {
@@ -49,7 +48,7 @@ function Dispatch() {
     try {
       // mark vehicle as dispatched
       await apiService.patch(`/vehicles/${vehicle.id}/`, {
-        status: "DISPATCHED",
+        status: "AVAILABLE",
       });
 
       // also mark its ticket as dispatched
@@ -167,24 +166,33 @@ function Dispatch() {
                     </td>
                   </tr>
                 ) : (
-                  queue.map((vehicle) => (
-                    <tr key={vehicle.id} className="dispatch-table-row">
+                  queue.map((ticket) => (
+                    <tr key={ticket.id} className="dispatch-table-row">
                       <td>
                         <span className="dispatch-plate">
-                          {vehicle.plate_number}
+                          {ticket.vehicle?.plate_number || "—"}
                         </span>
                       </td>
                       <td className="dispatch-td-name">
-                        {getDriverName(vehicle)}
+                        {ticket.driver?.name ||
+                          ticket.vehicle?.active_driver_name ||
+                          "—"}
                       </td>
                       <td className="dispatch-td-route">
-                        {vehicle.route_detail?.full_name || "—"}
+                        {ticket.route ||
+                          ticket.vehicle?.route_detail?.full_name ||
+                          "—"}
+                      </td>
+                      <td>
+                        <button onClick={() => handleDispatch(ticket.vehicle)}>
+                          Dispatch
+                        </button>
                       </td>
 
                       <td>
                         <button
                           className="dispatch-btn dispatch-btn--dispatch"
-                          onClick={() => handleDispatch(vehicle)}
+                          onClick={() => handleDispatch(ticket.vehicle)}
                         >
                           <svg
                             width="13"
