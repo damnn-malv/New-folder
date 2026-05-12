@@ -18,7 +18,12 @@ export function useCollection() {
 
   const STORAGE_KEY = "batch_verifications";
 
-  const getTodayDateString = (date) => date.toISOString().split("T")[0];
+  const getTodayDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
   const isTodayTicket = (ticket) => {
     if (!ticket?.issued_at) return false;
     return (
@@ -29,9 +34,10 @@ export function useCollection() {
 
   const loadVerifiedBatches = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
+    const today = getTodayDateString(new Date());
+    
     if (stored) {
       const parsed = JSON.parse(stored);
-      const today = getTodayDateString(new Date());
       // Reset if date changed
       if (parsed.date !== today) {
         setVerifiedBatches({ batch1: null, batch2: null });
@@ -43,7 +49,6 @@ export function useCollection() {
         setVerifiedBatches({ batch1: parsed.batch1, batch2: parsed.batch2 });
       }
     } else {
-      const today = getTodayDateString(new Date());
       setVerifiedBatches({ batch1: null, batch2: null });
       localStorage.setItem(
         STORAGE_KEY,
@@ -55,10 +60,11 @@ export function useCollection() {
   const isBatchVerifiable = (batchKey) => {
     const now = new Date();
     const hour = now.getHours();
-    const verifiedDate = verifiedBatches[batchKey.toLowerCase()];
+    const normalizedKey = batchKey.toLowerCase().replace(" ", "");
+    const verifiedDate = verifiedBatches[normalizedKey];
     const today = getTodayDateString(now);
 
-    if (verifiedDate === today) return false; // Already verified today
+    if (verifiedDate === today) return false;
 
     if (batchKey === "Batch 1") {
       return hour >= 15;
@@ -71,6 +77,13 @@ export function useCollection() {
   useEffect(() => {
     loadVerifiedBatches();
     fetchTickets();
+    
+    // Refresh button state every minute to catch time-based unlocks
+    const interval = setInterval(() => {
+      setVerifiedBatches({ ...verifiedBatches });
+    }, 60000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchTickets = async () => {

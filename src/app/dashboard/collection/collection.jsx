@@ -96,9 +96,6 @@ function Collection({ userRole }) {
             onVerify={handleVerifyBatch}
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 1")}
-            isVerifiable={
-              userRole !== "MANAGER" && isBatchVerifiable("Batch 1")
-            }
           />
           <BatchCard
             label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)"
@@ -107,9 +104,6 @@ function Collection({ userRole }) {
             onVerify={handleVerifyBatch}
             verifyingBatch={verifyingBatch}
             isVerifiable={isBatchVerifiable("Batch 2")}
-            isVerifiable={
-              userRole !== "MANAGER" && isBatchVerifiable("Batch 1")
-            }
           />
           {userRole === "ADMIN" && (
             <button
