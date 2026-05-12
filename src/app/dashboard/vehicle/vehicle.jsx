@@ -403,7 +403,6 @@ function Vehicle() {
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                 >
                   <option value="AVAILABLE">Available</option>
-                  <option value="ON_TRIP">On Trip</option>
                   <option value="MAINTENANCE">Under Maintenance</option>
                 </select>
               </Field>
