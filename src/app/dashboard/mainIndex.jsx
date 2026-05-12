@@ -238,7 +238,7 @@ function mainIndex() {
           <Route index element={<Dashboard />} />
           <Route path="Dashboard" element={<Dashboard />} />
           <Route path="Dispatch" element={<Dispatch />} />
-          <Route path="Ticket" element={<Ticket />} />
+          <Route path="Ticket" element={<Ticket userRole={userRole} />} />
           <Route
             path="Collections"
             element={<Collections userRole={userRole} />}

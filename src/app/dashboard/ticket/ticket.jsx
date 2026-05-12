@@ -15,7 +15,7 @@ import {
   EmptyStateIcon,
 } from "../../../lib/ticket/ticketIcon";
 
-function Ticket() {
+function Ticket({ userRole }) {
   const {
     filteredTickets,
     searchTerm,
@@ -49,7 +49,7 @@ function Ticket() {
     setNewTicketPrice,
     saveTicketPrice,
     isSavingTicketPrice,
-  } = useTicket();
+  } = useTicket(userRole);
 
   const [isLateTicketModalOpen, setIsLateTicketModalOpen] = useState(false);
 

@@ -50,7 +50,7 @@ export const hadBatch1TicketToday = (vehicleId, tickets) => {
 };
 
 // ─── Custom Hook ──────────────────────────────────────────────────────────────
-export function useTicket() {
+export function useTicket(userRole = "") {
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -180,7 +180,8 @@ export function useTicket() {
 
     // Batch window check
     const currentBatch = getCurrentBatch();
-    if (!currentBatch) {
+    const bypassBatchCheck = userRole === "ADMIN";
+    if (!currentBatch && !bypassBatchCheck) {
       const hour = new Date().getHours();
       const tooEarly = hour < SHIFTS.BATCH_1.startHour;
       setIssueError(
