@@ -3,7 +3,7 @@ import {
   useCollection,
   formatTime,
   BatchCard,
-} from "../../../lib/useCollection";
+} from "../../../lib/collection/useCollection";
 import { OperationsService } from "../../../lib/operations-service";
 import "../../../styles/Collection.css";
 
@@ -262,9 +262,19 @@ function Collection({ userRole }) {
                         </td>
                         <td>
                           <span
-                            className={`col-verified ${ticket.is_verified ? "col-verified--yes" : "col-verified--pending"}`}
+                            className={`col-verified ${
+                              ticket.status === "CANCELLED"
+                                ? "col-verified--cancelled"
+                                : ticket.is_verified
+                                ? "col-verified--yes"
+                                : "col-verified--pending"
+                            }`}
                           >
-                            {ticket.is_verified ? "✓ Verified" : "○ Pending"}
+                            {ticket.status === "CANCELLED"
+                              ? "✗ Cancelled"
+                              : ticket.is_verified
+                              ? "✓ Verified"
+                              : "○ Pending"}
                           </span>
                         </td>
                       </tr>

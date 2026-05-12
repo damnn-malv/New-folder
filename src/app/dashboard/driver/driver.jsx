@@ -271,6 +271,8 @@ function Driver() {
                   onChange={(e) =>
                     setForm({ ...form, contact: e.target.value })
                   }
+                  pattern="\d{11}"
+                  maxLength={11}
                   required
                 />
               </div>

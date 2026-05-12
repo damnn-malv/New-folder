@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { OperationsService } from "./operations-service";
-import { apiService } from "./api-service";
+import { OperationsService } from "../operations-service";
+import { apiService } from "../api-service";
 
 export function useCollection() {
   const [tickets, setTickets] = useState([]);
