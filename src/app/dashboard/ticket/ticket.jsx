@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTicket, formatTime } from "../../../lib/useTicket";
 import LateTicketIssue from "../../../lib/ticket/lateTicketIssue";
 import TicketPriceModal from "../../../lib/ticket/ticketPriceModal";
-import TicketStatusBadge from "../../../lib/ticket/TicketStatusBadge";
+import TicketStatusBadge from "../../../lib/ticket/ticketStatusBadge";
 import "../../../styles/Ticket.css";
 import {
   HistoryIcon,
