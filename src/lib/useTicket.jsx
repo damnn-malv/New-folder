@@ -64,8 +64,6 @@ export function useTicket(userRole = "") {
   const [issuingTicket, setIssuingTicket] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [issueError, setIssueError] = useState("");
-  const [missedBatchWarning, setMissedBatchWarning] = useState("");
-  const [overrideMissedBatch, setOverrideMissedBatch] = useState(false);
 
   const {
     ticketFee,
@@ -135,8 +133,7 @@ export function useTicket(userRole = "") {
     const vehicleId = parseInt(e.target.value);
     const vehicle = vehicles.find((v) => v.id === vehicleId);
     setSelectedVehicle(vehicle || null);
-    setMissedBatchWarning("");
-    setOverrideMissedBatch(false);
+
     setIssueError("");
     if (vehicle?.active_driver) {
       setSelectedDriver(
@@ -157,7 +154,6 @@ export function useTicket(userRole = "") {
   const handleIssueTicket = async () => {
     setSuccessMessage("");
     setIssueError("");
-    setMissedBatchWarning("");
 
     if (!selectedVehicle) {
       setIssueError("Please select a vehicle.");
@@ -210,7 +206,7 @@ export function useTicket(userRole = "") {
       setIssuingTicket(true);
       const now = new Date();
       const ticketId = `TICKET-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
-      const isLate = overrideMissedBatch;
+
       const ticketPayload = {
         id: ticketId,
         vehicle_id: selectedVehicle.id,
@@ -218,8 +214,6 @@ export function useTicket(userRole = "") {
         route: selectedVehicle.route_detail?.full_name || "",
         status: "ISSUED",
         is_verified: false,
-        is_late: isLate,
-        intended_batch: isLate ? SHIFTS.BATCH_1.name : "",
       };
       if (ticketFee > 0) {
         ticketPayload.collection_amount = ticketFee;
@@ -236,8 +230,7 @@ export function useTicket(userRole = "") {
       setSelectedVehicle(null);
       setSelectedDriver(null);
       setShowDriverModal(false);
-      setOverrideMissedBatch(false);
-      setMissedBatchWarning("");
+
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
       setIssueError(err.message || "Error issuing ticket");
@@ -272,9 +265,7 @@ export function useTicket(userRole = "") {
     issuingTicket,
     successMessage,
     issueError,
-    missedBatchWarning,
-    overrideMissedBatch,
-    setOverrideMissedBatch,
+
     // Computed
     availableVehicles,
     // Actions
