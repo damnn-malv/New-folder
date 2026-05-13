@@ -350,15 +350,15 @@ function Collection({ userRole }) {
                               ticket.status === "CANCELLED"
                                 ? "col-verified--cancelled"
                                 : ticket.is_verified
-                                ? "col-verified--yes"
-                                : "col-verified--pending"
+                                  ? "col-verified--yes"
+                                  : "col-verified--pending"
                             }`}
                           >
                             {ticket.status === "CANCELLED"
                               ? "✗ Cancelled"
                               : ticket.is_verified
-                              ? "✓ Verified"
-                              : "○ Pending"}
+                                ? "✓ Verified"
+                                : "○ Pending"}
                           </span>
                         </td>
                       </tr>
@@ -406,7 +406,8 @@ function Collection({ userRole }) {
               <div>
                 <h2 className="col-modal-title">Confirm Verification</h2>
                 <p className="col-modal-subtitle">
-                  Are you sure you want to verify all pending tickets in {confirmingBatchKey}?
+                  Are you sure you want to verify all pending tickets in{" "}
+                  {confirmingBatchKey}?
                 </p>
               </div>
               <button

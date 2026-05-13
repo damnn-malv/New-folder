@@ -35,7 +35,7 @@ export function useCollection(shifts) {
   const loadVerifiedBatches = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
     const today = getTodayDateString(new Date());
-    
+
     if (stored) {
       const parsed = JSON.parse(stored);
       // Reset if date changed

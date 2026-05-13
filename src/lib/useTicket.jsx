@@ -183,8 +183,8 @@ export function useTicket(userRole = "") {
       return;
     }
 
-<<<<<<< Updated upstream
-=======
+
+
     // Batch window check
     const currentBatch = getCurrentBatch(scheduleShifts);
     const bypassBatchCheck = userRole === "ADMIN";
@@ -203,7 +203,7 @@ export function useTicket(userRole = "") {
       return;
     }
 
->>>>>>> Stashed changes
+
     // Vehicle must be AVAILABLE
     if (!["AVAILABLE", "DISPATCHED"].includes(selectedVehicle.status)) {
       setIssueError(
