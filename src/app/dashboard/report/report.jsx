@@ -238,7 +238,7 @@ export default function Report() {
               type="date"
               className="rpt-date-input"
               value={filters.startDate}
-              max={filters.endDate || undefined}
+              max={today}
               onChange={(e) => handleDateChange("startDate", e.target.value)}
             />
           </div>
@@ -249,6 +249,7 @@ export default function Report() {
               className="rpt-date-input"
               value={filters.endDate}
               min={filters.startDate || undefined}
+              max={today}
               onChange={(e) => handleDateChange("endDate", e.target.value)}
             />
           </div>

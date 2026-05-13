@@ -125,6 +125,7 @@ export function useCollection(shifts) {
           isTodayTicket(t) &&
           !t.is_verified &&
           t.status !== "CANCELLED" &&
+          t.vehicle?.status !== "QUEUED" &&
           OperationsService.getEffectiveBatchName(t, shifts) === batchName,
       );
 
