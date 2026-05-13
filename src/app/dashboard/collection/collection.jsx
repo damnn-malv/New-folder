@@ -122,13 +122,24 @@ function Collection({ userRole }) {
         </div>
         <div>
           <button
-            className="cursor-pointer"
+            className="col-schedule-btn"
             onClick={() => {
               setEditingShifts(JSON.parse(JSON.stringify(shifts)));
               setIsScheduleModalOpen(true);
             }}
           >
-            change batch schedule
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Batch Schedule
+            <span className="col-schedule-btn__edit">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              Edit
+            </span>
           </button>
         </div>
       </div>
@@ -398,44 +409,65 @@ function Collection({ userRole }) {
 
       {confirmingBatchKey && (
         <div
-          className="col-overlay"
+          className="col-sched-overlay"
           onClick={() => setConfirmingBatchKey(null)}
         >
-          <div className="col-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="col-modal-header">
-              <div>
-                <h2 className="col-modal-title">Confirm Verification</h2>
-                <p className="col-modal-subtitle">
-                  Are you sure you want to verify all pending tickets in{" "}
-                  {confirmingBatchKey}?
-                </p>
+          <div className="col-sched-modal" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="col-sched-modal-header">
+              <div className="col-sched-modal-header-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <h2 className="col-sched-modal-title">Confirm Verification</h2>
               </div>
               <button
                 type="button"
-                className="col-modal-close"
+                className="col-sched-modal-close"
                 onClick={() => setConfirmingBatchKey(null)}
                 aria-label="Close"
               >
-                ×
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
-            <div className="col-modal-body">
-              <div className="col-confirm-actions">
-                <button
-                  type="button"
-                  className="col-confirm-btn col-confirm-btn--cancel"
-                  onClick={() => setConfirmingBatchKey(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="col-confirm-btn col-confirm-btn--confirm"
-                  onClick={confirmBatchVerification}
-                >
-                  Yes, Verify
-                </button>
+
+            {/* Body */}
+            <div className="col-sched-modal-body">
+              <div className="col-sched-batch-label-row">
+                <span className="col-sched-batch-name">Batch</span>
+                <span className="col-sched-batch-preview">{confirmingBatchKey}</span>
               </div>
+
+              <p className="col-sched-note" style={{ marginTop: 12 }}>
+                All pending tickets in <strong>{confirmingBatchKey}</strong> will be marked as verified. This action cannot be undone.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="col-sched-modal-footer">
+              <button
+                type="button"
+                className="col-sched-modal-btn col-sched-modal-btn--cancel"
+                onClick={() => setConfirmingBatchKey(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="col-sched-modal-btn col-sched-modal-btn--submit"
+                onClick={confirmBatchVerification}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                Yes, Verify
+              </button>
             </div>
           </div>
         </div>
@@ -549,89 +581,123 @@ function Collection({ userRole }) {
 
       {isScheduleModalOpen && (
         <div
-          className="col-overlay"
+          className="col-sched-overlay"
           onClick={() => setIsScheduleModalOpen(false)}
         >
-          <div className="col-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="col-modal-header">
-              <div>
-                <h2 className="col-modal-title">Edit Batch Schedule</h2>
-                <p className="col-modal-subtitle">
-                  Update the batch times and save the configuration.
-                </p>
+          <div className="col-sched-modal" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="col-sched-modal-header">
+              <div className="col-sched-modal-header-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <h2 className="col-sched-modal-title">Edit Batch Schedule</h2>
               </div>
               <button
                 type="button"
-                className="col-modal-close"
+                className="col-sched-modal-close"
                 onClick={() => setIsScheduleModalOpen(false)}
                 aria-label="Close"
               >
-                ×
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
-            <div className="col-modal-body">
-              <div className="col-table-wrap">
-                <table className="col-table">
-                  <thead>
-                    <tr>
-                      {["Batch", "Start Hour", "End Hour"].map((h) => (
-                        <th key={h}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(editingShifts).map(([key, shift]) => (
-                      <tr key={key} className="col-table-row">
-                        <td>{shift.name}</td>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            max="23"
-                            value={shift.startHour}
-                            onChange={(e) =>
-                              handleScheduleFieldChange(
-                                key,
-                                "startHour",
-                                e.target.value,
-                              )
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            max="23"
-                            value={shift.endHour}
-                            onChange={(e) =>
-                              handleScheduleFieldChange(
-                                key,
-                                "endHour",
-                                e.target.value,
-                              )
-                            }
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+
+            {/* Body */}
+            <div className="col-sched-modal-body">
+              {Object.entries(editingShifts).map(([key, shift], idx, arr) => (
+                <div key={key} className={`col-sched-batch-block${idx < arr.length - 1 ? " col-sched-batch-block--bordered" : ""}`}>
+                  {/* Current schedule display — mirrors ticket-price-current */}
+                  <div className="col-sched-batch-label-row">
+                    <span className="col-sched-batch-name">{shift.name}</span>
+                    <span className="col-sched-batch-preview">{shift.label}</span>
+                  </div>
+
+                  {/* Start & End hour inputs side-by-side */}
+                  <div className="col-sched-hours-row">
+                    <div className="col-sched-field">
+                      <label className="col-sched-label">Start Hour</label>
+                      <div className="col-sched-input-wrap">
+                        <span className="col-sched-input-prefix">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12" />
+                          </svg>
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          className="col-sched-input"
+                          value={shift.startHour}
+                          onChange={(e) =>
+                            handleScheduleFieldChange(key, "startHour", e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="col-sched-hours-divider">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4">
+                        <path d="M5 12h14" />
+                        <path d="m12 5 7 7-7 7" />
+                      </svg>
+                    </div>
+
+                    <div className="col-sched-field">
+                      <label className="col-sched-label">End Hour</label>
+                      <div className="col-sched-input-wrap">
+                        <span className="col-sched-input-prefix">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 12 16 14" />
+                          </svg>
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          className="col-sched-input"
+                          value={shift.endHour}
+                          onChange={(e) =>
+                            handleScheduleFieldChange(key, "endHour", e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <p className="col-sched-note">
+                Changes take effect immediately after saving. Tickets already issued retain their original batch assignment.
+              </p>
             </div>
-            <div className="col-modal-footer">
+
+            {/* Footer */}
+            <div className="col-sched-modal-footer">
               <button
                 type="button"
-                className="col-action-btn"
+                className="col-sched-modal-btn col-sched-modal-btn--cancel"
                 onClick={() => setIsScheduleModalOpen(false)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="bc-verify-btn"
+                className="col-sched-modal-btn col-sched-modal-btn--submit"
                 onClick={handleSaveSchedule}
               >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
                 Save Schedule
               </button>
             </div>

@@ -241,6 +241,11 @@ export function useTicket(userRole = "") {
     [vehicles],
   );
 
+  const activeDrivers = useMemo(
+    () => drivers.filter((d) => d.status === "ACTIVE"),
+    [drivers],
+  );
+
   return {
     // State
     tickets,
@@ -263,6 +268,7 @@ export function useTicket(userRole = "") {
 
     // Computed
     availableVehicles,
+    activeDrivers,
     // Actions
     fetchTickets,
     handleVehicleChange,

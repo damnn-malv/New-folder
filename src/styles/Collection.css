@@ -731,12 +731,339 @@
   }
 }
 
-/* ── Responsive ── */
-@media (max-width: 1100px) {
+
+/* ── Change Batch Schedule Button (mirrors .ticket-price-btn) ── */
+.col-schedule-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px 9px 12px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.col-schedule-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  background: var(--gold-dim);
+}
+
+.col-schedule-btn__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%);
+  color: var(--gold);
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-left: 4px;
+  line-height: 1;
+}
+
+/* ── Schedule Modal Overlay (mirrors ticket-overlay) ── */
+.col-sched-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(10, 16, 35, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: col-sched-fade 0.2s ease;
+}
+
+@keyframes col-sched-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.col-sched-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+  animation: col-sched-rise 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes col-sched-rise {
+  from { opacity: 0; transform: translateY(32px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header — navy gradient matching ticket-modal-header */
+.col-sched-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-soft);
+  background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%);
+}
+
+.col-sched-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.col-sched-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.col-sched-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.col-sched-modal-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Body */
+.col-sched-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Per-batch block */
+.col-sched-batch-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.col-sched-batch-block--bordered {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.col-sched-batch-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(26, 39, 68, 0.05) 0%,
+    rgba(26, 39, 68, 0.02) 100%
+  );
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--navy);
+  border-radius: 9px;
+}
+
+.dark .col-sched-batch-label-row {
+  border-left-color: var(--gold);
+  background: linear-gradient(
+    135deg,
+    rgba(201, 168, 76, 0.07) 0%,
+    rgba(201, 168, 76, 0.03) 100%
+  );
+}
+
+.col-sched-batch-name {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-label);
+}
+
+.col-sched-batch-preview {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.dark .col-sched-batch-preview {
+  color: var(--gold);
+}
+
+/* Field rows */
+.col-sched-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+/* Side-by-side hour inputs */
+.col-sched-hours-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.col-sched-hours-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.col-sched-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-label);
+}
+
+.col-sched-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.col-sched-input-prefix {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-label);
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.col-sched-input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-family: inherit;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  box-sizing: border-box;
+}
+
+.col-sched-input::-webkit-outer-spin-button,
+.col-sched-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.col-sched-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+}
+
+/* Note */
+.col-sched-note {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin: 16px 0 0;
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: rgba(201, 168, 76, 0.06);
+  border-left: 3px solid rgba(201, 168, 76, 0.4);
+  border-radius: 0 6px 6px 0;
+}
+
+/* Footer */
+.col-sched-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.col-sched-modal-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  border: none;
+}
+
+.col-sched-modal-btn:hover {
+  opacity: 0.87;
+  transform: translateY(-1px);
+}
+
+.col-sched-modal-btn:active {
+  transform: translateY(0);
+}
+
+.col-sched-modal-btn--cancel {
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.col-sched-modal-btn--cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.col-sched-modal-btn--submit {
+  background: linear-gradient(135deg, #1a2744 0%, #2d3e5f 100%);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(26, 39, 68, 0.25);
+}
+
+@media (max-width: 480px) {
+  .col-sched-modal-body {
+    padding: 16px;
+  }
+}
+
   .col-grid {
     grid-template-columns: 300px 1fr;
   }
-}
+
 
 @media (max-width: 860px) {
   .col-grid {
