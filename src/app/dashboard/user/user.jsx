@@ -55,19 +55,49 @@ function User() {
     }
   };
 
+  const UNIQUE_ROLES = ["ADMIN", "SUPERVISOR", "MANAGER"];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
+
+    const role = form.role;
+    const isActive = !!form.is_active;
+
+    // Check if this role requires uniqueness and the new account will be active
+    let conflictingUser = null;
+    if (UNIQUE_ROLES.includes(role) && isActive) {
+      conflictingUser = users.find(
+        (u) =>
+          u.role === role &&
+          u.is_active &&
+          (!editing || u.id !== editing.id),
+      );
+    }
+
+    let confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
+    if (conflictingUser) {
+      confirmMsg = `There is already an active ${role.charAt(0) + role.slice(1).toLowerCase()} (${conflictingUser.first_name} ${conflictingUser.last_name}). Proceeding will set them to Inactive. Continue?`;
+    }
+
     const confirmed = await showConfirm(confirmMsg);
     if (!confirmed) return;
+
     try {
+      // Deactivate the conflicting user first
+      if (conflictingUser) {
+        await apiService.updateUser(conflictingUser.id, {
+          ...conflictingUser,
+          is_active: false,
+        });
+      }
+
       const payload = {
         username: form.username || "",
         email: form.email || "",
         first_name: form.first_name || "",
         last_name: form.last_name || "",
         role: form.role || "PERSONNEL",
-        is_active: !!form.is_active,
+        is_active: isActive,
       };
       if (form.password && form.password.trim() !== "")
         payload.password = form.password;
@@ -108,7 +138,8 @@ function User() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to remove this staff account?")) return;
+    const confirmed = await showConfirm("Are you sure you want to remove this staff account?");
+    if (!confirmed) return;
     try {
       await apiService.deleteUser(id);
       fetchUsers();

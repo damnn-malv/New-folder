@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiService } from "../api-service";
+import { useConfirm } from "../../components/ui/ToastConfirmContext";
 
 const DESTINATION = "San Fernando";
 
@@ -140,6 +141,8 @@ export function useVehicle() {
   const [newOrigin, setNewOrigin] = useState("");
   const [routeError, setRouteError] = useState("");
 
+  const showConfirm = useConfirm();
+
   useEffect(() => {
     fetchDrivers();
     fetchRoutes();
@@ -226,6 +229,10 @@ export function useVehicle() {
       return;
     }
 
+    const confirmMsg = editing ? "Confirm update?" : "Confirm registry?";
+    const confirmed = await showConfirm(confirmMsg);
+    if (!confirmed) return;
+
     try {
       const payload = {
         plate_number: form.plate_number,
@@ -280,8 +287,8 @@ export function useVehicle() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this vehicle record?"))
-      return;
+    const confirmed = await showConfirm("Are you sure you want to delete this vehicle record?");
+    if (!confirmed) return;
     try {
       await apiService.deleteVehicle(id);
       fetchVehicles();
