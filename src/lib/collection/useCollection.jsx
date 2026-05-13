@@ -267,7 +267,7 @@ export const BatchCard = ({
         type="button"
         className="bc-verify-btn"
         onClick={() => onVerify(batchKey)}
-        disabled={verifyingBatch === batchKey}
+        disabled={!isVerifiable}
       >
         {verifyingBatch === batchKey ? (
           <>
