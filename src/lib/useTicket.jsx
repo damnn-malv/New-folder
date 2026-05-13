@@ -183,27 +183,6 @@ export function useTicket(userRole = "") {
       return;
     }
 
-
-
-    // Batch window check
-    const currentBatch = getCurrentBatch(scheduleShifts);
-    const bypassBatchCheck = userRole === "ADMIN";
-    if (!currentBatch && !bypassBatchCheck) {
-      const hour = new Date().getHours();
-      const batch1Start =
-        scheduleShifts.BATCH_1?.startHour ?? SHIFTS.BATCH_1.startHour;
-      const batch2End =
-        scheduleShifts.BATCH_2?.endHour ?? SHIFTS.BATCH_2.endHour;
-      const tooEarly = hour < batch1Start;
-      setIssueError(
-        tooEarly
-          ? `Ticket issuance hasn't opened yet. Batch 1 starts at ${batch1Start}:00 AM.`
-          : `Ticket issuance is closed. Operations end at ${batch2End}:00 PM.`,
-      );
-      return;
-    }
-
-
     // Vehicle must be AVAILABLE
     if (!["AVAILABLE", "DISPATCHED"].includes(selectedVehicle.status)) {
       setIssueError(
