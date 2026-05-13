@@ -150,6 +150,14 @@ export const apiService = {
     return this.get("/server-time/");
   },
 
+  getSchedules() {
+    return this.get("/schedules/");
+  },
+
+  updateSchedules(data) {
+    return this.put("/schedules/", data);
+  },
+
   createTicket(ticketData) {
     return this.post("/tickets/", ticketData);
   },

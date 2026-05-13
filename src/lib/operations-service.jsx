@@ -1,4 +1,3 @@
-import { SHIFTS } from "./constants";
 import { format } from "date-fns";
 
 /**
@@ -6,15 +5,14 @@ import { format } from "date-fns";
  * Decouples domain logic from React components (SRP).
  */
 export const OperationsService = {
-  getShiftBatchName(dateInput) {
+  getShiftBatchName(dateInput, shifts) {
     const date = new Date(dateInput);
     const hour = date.getHours();
 
-    if (hour >= SHIFTS.BATCH_1.startHour && hour < SHIFTS.BATCH_1.endHour) {
-      return SHIFTS.BATCH_1.name;
-    }
-    if (hour >= SHIFTS.BATCH_2.startHour && hour < SHIFTS.BATCH_2.endHour) {
-      return SHIFTS.BATCH_2.name;
+    for (const shift of Object.values(shifts || {})) {
+      if (hour >= shift.startHour && hour < shift.endHour) {
+        return shift.name;
+      }
     }
     return "Other";
   },
@@ -38,49 +36,47 @@ export const OperationsService = {
 
   // Returns the effective batch name for a ticket, respecting late issuances.
   // A late ticket (is_late=true) belongs to its intended_batch, not its actual issue time.
-  getEffectiveBatchName(ticket) {
+  getEffectiveBatchName(ticket, shifts) {
     if (ticket.is_late && ticket.intended_batch) return ticket.intended_batch;
-    return this.getShiftBatchName(ticket.issued_at);
+    return this.getShiftBatchName(ticket.issued_at, shifts);
   },
 
-  calculateBatchStats(tickets) {
+  calculateBatchStats(tickets, shifts) {
     const activeTickets = tickets.filter((t) => t.status !== "CANCELLED");
+    const stats = {};
 
-    const b1 = activeTickets.filter(
-      (t) => this.getEffectiveBatchName(t) === SHIFTS.BATCH_1.name,
-    );
-    const b2 = activeTickets.filter(
-      (t) => this.getEffectiveBatchName(t) === SHIFTS.BATCH_2.name,
-    );
+    Object.entries(shifts || {}).forEach(([key, shift]) => {
+      const batchTickets = activeTickets.filter(
+        (t) => this.getEffectiveBatchName(t, shifts) === shift.name,
+      );
+      stats[key] = {
+        total: batchTickets.reduce(
+          (sum, t) => sum + Number(t.collection_amount || 0),
+          0,
+        ),
+        count: batchTickets.filter((t) => t.status !== "COLLECTED").length,
+        pending: batchTickets.filter((t) => !t.is_verified).length,
+      };
+    });
 
-    return {
-      batch1: {
-        total: b1.reduce((sum, t) => sum + Number(t.collection_amount || 0), 0),
-        count: b1.filter((t) => t.status !== "COLLECTED").length,
-        pending: b1.filter((t) => !t.is_verified).length,
-      },
-      batch2: {
-        total: b2.reduce((sum, t) => sum + Number(t.collection_amount || 0), 0),
-        count: b2.filter((t) => t.status !== "COLLECTED").length,
-        pending: b2.filter((t) => !t.is_verified).length,
-      },
-      totalVerified: activeTickets
-        .filter((t) => t.is_verified)
-        .reduce((sum, t) => sum + Number(t.collection_amount || 0), 0),
-    };
+    stats.totalVerified = activeTickets
+      .filter((t) => t.is_verified)
+      .reduce((sum, t) => sum + Number(t.collection_amount || 0), 0);
+
+    return stats;
   },
 
   /**
    * Groups tickets by route and calculates financial summaries for reporting.
    */
-  getRouteTallyReport(tickets, vehicles, dateFilter, batchFilter) {
+  getRouteTallyReport(tickets, vehicles, dateFilter, batchFilter, shifts) {
     const filtered = tickets.filter((t) => {
       if (t.status === "CANCELLED") return false;
       const ticketDateStr = t.issued_at.split("T")[0];
       if (ticketDateStr !== dateFilter) return false;
 
       if (batchFilter !== "ALL") {
-        return this.getShiftBatchName(t.issued_at) === batchFilter;
+        return this.getShiftBatchName(t.issued_at, shifts) === batchFilter;
       }
       return true;
     });

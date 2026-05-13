@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { apiService } from "../api-service";
-import { SHIFTS } from "../constants";
+import { useShifts } from "../useShifts";
 
 const LateTicketIssue = ({ vehicles, drivers, ticketFee, onClose }) => {
   const [lateDate, setLateDate] = useState("");
   const [lateBatch, setLateBatch] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
+
+  const { shifts: scheduleShifts } = useShifts();
 
   const handleDateChange = (e) => setLateDate(e.target.value);
   const handleBatchChange = (e) => setLateBatch(e.target.value);
@@ -151,14 +153,12 @@ const LateTicketIssue = ({ vehicles, drivers, ticketFee, onClose }) => {
               onChange={handleBatchChange}
             >
               <option value="">— Select Batch —</option>
-              <option value={SHIFTS.BATCH_1.name}>
-                {SHIFTS.BATCH_1.name} ({formatHour(SHIFTS.BATCH_1.startHour)}–
-                {formatHour(SHIFTS.BATCH_1.endHour)})
-              </option>
-              <option value={SHIFTS.BATCH_2.name}>
-                {SHIFTS.BATCH_2.name} ({formatHour(SHIFTS.BATCH_2.startHour)}–
-                {formatHour(SHIFTS.BATCH_2.endHour)})
-              </option>
+              {Object.entries(scheduleShifts).map(([key, shift]) => (
+                <option key={key} value={shift.name}>
+                  {shift.name} ({formatHour(shift.startHour)}–
+                  {formatHour(shift.endHour)})
+                </option>
+              ))}
             </select>
           </div>
 

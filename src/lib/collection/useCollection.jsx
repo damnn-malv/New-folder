@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { OperationsService } from "../operations-service";
 import { apiService } from "../api-service";
 
-export function useCollection() {
+export function useCollection(shifts) {
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -40,25 +40,35 @@ export function useCollection() {
       const parsed = JSON.parse(stored);
       // Reset if date changed
       if (parsed.date !== today) {
-        setVerifiedBatches({ batch1: null, batch2: null });
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ date: today, batch1: null, batch2: null }),
-        );
+        setVerifiedBatches({});
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today }));
       } else {
-        setVerifiedBatches({ batch1: parsed.batch1, batch2: parsed.batch2 });
+        setVerifiedBatches(parsed);
       }
     } else {
-      setVerifiedBatches({ batch1: null, batch2: null });
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ date: today, batch1: null, batch2: null }),
-      );
+      const today = getTodayDateString(new Date());
+      setVerifiedBatches({});
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today }));
     }
   };
 
-  const isBatchVerifiable = () => {
-    return true;
+  const getShiftByName = (batchName) =>
+    Object.values(shifts || {}).find((shift) => shift.name === batchName);
+
+  const isBatchVerifiable = (batchKey) => {
+    const now = new Date();
+    const hour = now.getHours();
+    const normalizedKey = batchKey.toLowerCase().replace(/\s+/g, "");
+    const verifiedDate = verifiedBatches[normalizedKey];
+    const today = getTodayDateString(now);
+
+    if (verifiedDate === today) return false; // Already verified today
+
+    const shift = getShiftByName(batchKey);
+    if (shift) {
+      return hour >= shift.endHour;
+    }
+    return false;
   };
 
   useEffect(() => {
@@ -82,12 +92,14 @@ export function useCollection() {
   const todaysTickets = useMemo(() => tickets.filter(isTodayTicket), [tickets]);
 
   useEffect(() => {
-    if (todaysTickets.length > 0) {
-      setBatchStats(OperationsService.calculateBatchStats(todaysTickets));
+    if (todaysTickets.length > 0 && Object.keys(shifts || {}).length > 0) {
+      setBatchStats(
+        OperationsService.calculateBatchStats(todaysTickets, shifts),
+      );
     } else {
       setBatchStats(null);
     }
-  }, [todaysTickets]);
+  }, [todaysTickets, shifts]);
 
   const safeLower = (val) => String(val ?? "").toLowerCase();
 
@@ -113,7 +125,7 @@ export function useCollection() {
           isTodayTicket(t) &&
           !t.is_verified &&
           t.status !== "CANCELLED" &&
-          OperationsService.getEffectiveBatchName(t) === batchName,
+          OperationsService.getEffectiveBatchName(t, shifts) === batchName,
       );
 
       if (batchTickets.length === 0) {
@@ -132,15 +144,14 @@ export function useCollection() {
 
       // Mark batch as verified today
       const today = getTodayDateString(new Date());
+      const normalizedKey = batchName.toLowerCase().replace(/\s+/g, "");
       const updated = {
         ...verifiedBatches,
-        [batchName.toLowerCase().replace(" ", "")]: today,
+        [normalizedKey]: today,
+        date: today,
       };
       setVerifiedBatches(updated);
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ date: today, ...updated }),
-      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
       setSuccessMessage(
         `${batchTickets.length} ticket(s) in ${batchName} verified successfully.`,

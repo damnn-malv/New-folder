@@ -3,6 +3,7 @@ import { OperationsService } from "./operations-service";
 import { SHIFTS } from "./constants";
 import { apiService } from "./api-service";
 import { useTicketPrice } from "./useTicketPrice";
+import { useShifts } from "./useShifts";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 export const statusColor = {
@@ -26,25 +27,31 @@ export const formatTime = (dateString) => {
 };
 
 // Returns the current batch ("Batch 1" | "Batch 2" | null)
-export const getCurrentBatch = () => {
+export const getCurrentBatch = (shifts = SHIFTS) => {
   const hour = new Date().getHours();
-  if (hour >= SHIFTS.BATCH_1.startHour && hour < SHIFTS.BATCH_1.endHour)
-    return SHIFTS.BATCH_1.name;
-  if (hour >= SHIFTS.BATCH_2.startHour && hour < SHIFTS.BATCH_2.endHour)
-    return SHIFTS.BATCH_2.name;
+  const activeShifts = Object.keys(shifts || {}).length ? shifts : SHIFTS;
+  for (const shift of Object.values(activeShifts)) {
+    if (hour >= shift.startHour && hour < shift.endHour) {
+      return shift.name;
+    }
+  }
   return null;
 };
 
 // Returns true if this vehicle already has a non-cancelled ticket in Batch 1 today
-export const hadBatch1TicketToday = (vehicleId, tickets) => {
+export const hadBatch1TicketToday = (vehicleId, tickets, shifts = SHIFTS) => {
   const todayStr = new Date().toISOString().split("T")[0];
+  const activeShifts = Object.keys(shifts || {}).length ? shifts : SHIFTS;
+  const batch1Name =
+    activeShifts.BATCH_1?.name || Object.values(activeShifts)[0]?.name;
   return tickets.some((t) => {
     if (t.vehicle?.id !== vehicleId) return false;
     if (t.status === "CANCELLED") return false;
     const ticketDate = t.issued_at?.split("T")[0];
     return (
       ticketDate === todayStr &&
-      OperationsService.getShiftBatchName(t.issued_at) === SHIFTS.BATCH_1.name
+      OperationsService.getShiftBatchName(t.issued_at, activeShifts) ===
+        batch1Name
     );
   });
 };
@@ -76,6 +83,8 @@ export function useTicket(userRole = "") {
     saveTicketPrice,
     isSavingTicketPrice,
   } = useTicketPrice();
+
+  const { shifts: scheduleShifts } = useShifts();
 
   // Fetch data
   const fetchTickets = async () => {
@@ -174,6 +183,27 @@ export function useTicket(userRole = "") {
       return;
     }
 
+<<<<<<< Updated upstream
+=======
+    // Batch window check
+    const currentBatch = getCurrentBatch(scheduleShifts);
+    const bypassBatchCheck = userRole === "ADMIN";
+    if (!currentBatch && !bypassBatchCheck) {
+      const hour = new Date().getHours();
+      const batch1Start =
+        scheduleShifts.BATCH_1?.startHour ?? SHIFTS.BATCH_1.startHour;
+      const batch2End =
+        scheduleShifts.BATCH_2?.endHour ?? SHIFTS.BATCH_2.endHour;
+      const tooEarly = hour < batch1Start;
+      setIssueError(
+        tooEarly
+          ? `Ticket issuance hasn't opened yet. Batch 1 starts at ${batch1Start}:00 AM.`
+          : `Ticket issuance is closed. Operations end at ${batch2End}:00 PM.`,
+      );
+      return;
+    }
+
+>>>>>>> Stashed changes
     // Vehicle must be AVAILABLE
     if (!["AVAILABLE", "DISPATCHED"].includes(selectedVehicle.status)) {
       setIssueError(

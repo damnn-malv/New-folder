@@ -5,9 +5,16 @@ import {
   BatchCard,
 } from "../../../lib/collection/useCollection";
 import { OperationsService } from "../../../lib/operations-service";
+import { useShifts } from "../../../lib/useShifts";
 import "../../../styles/Collection.css";
 
 function Collection({ userRole }) {
+  const {
+    shifts,
+    loading: shiftsLoading,
+    error: shiftsError,
+    updateShifts,
+  } = useShifts();
   const {
     tickets,
     filteredTickets,
@@ -22,11 +29,13 @@ function Collection({ userRole }) {
     handleVerifyBatch,
     handleVerifyTicket,
     isBatchVerifiable,
-  } = useCollection();
+  } = useCollection(shifts);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isUnverifiedModalOpen, setIsUnverifiedModalOpen] = useState(false);
   const [confirmingBatchKey, setConfirmingBatchKey] = useState(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [editingShifts, setEditingShifts] = useState({});
   const rowsPerPage = 15;
   const unverifiedTickets = tickets.filter(
     (t) => !t.is_verified && t.status !== "CANCELLED",
@@ -47,6 +56,57 @@ function Collection({ userRole }) {
     }
   };
 
+  const formatLabel = (name, startHour, endHour) => {
+    const start =
+      startHour < 12
+        ? `${startHour}am`
+        : startHour === 12
+          ? "12pm"
+          : `${startHour - 12}pm`;
+    const end =
+      endHour < 12
+        ? `${endHour}am`
+        : endHour === 12
+          ? "12pm"
+          : `${endHour - 12}pm`;
+    return `${name} (${start}-${end})`;
+  };
+
+  const handleScheduleFieldChange = (key, field, value) => {
+    setEditingShifts((prev) => {
+      const updated = {
+        ...prev,
+        [key]: {
+          ...prev[key],
+          [field]:
+            field === "startHour" || field === "endHour"
+              ? Number(value)
+              : value,
+        },
+      };
+      // Recalculate label if startHour or endHour changed
+      if (field === "startHour" || field === "endHour") {
+        updated[key].label = formatLabel(
+          updated[key].name,
+          updated[key].startHour,
+          updated[key].endHour,
+        );
+      }
+      return updated;
+    });
+  };
+
+  const handleSaveSchedule = async () => {
+    try {
+      await updateShifts(editingShifts);
+      setIsScheduleModalOpen(false);
+    } catch (err) {
+      console.error("Failed to save schedule", err);
+    }
+  };
+
+  const batchKeys = Object.keys(shifts || {});
+
   return (
     <div className="col-page">
       {/* Header */}
@@ -60,9 +120,20 @@ function Collection({ userRole }) {
             </p>
           </div>
         </div>
+        <div>
+          <button
+            className="cursor-pointer"
+            onClick={() => {
+              setEditingShifts(JSON.parse(JSON.stringify(shifts)));
+              setIsScheduleModalOpen(true);
+            }}
+          >
+            change batch schedule
+          </button>
+        </div>
       </div>
 
-      {error && (
+      {(error || shiftsError) && (
         <div className="col-alert col-alert--error">
           <svg
             width="14"
@@ -76,7 +147,7 @@ function Collection({ userRole }) {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          {error}
+          {error || shiftsError}
         </div>
       )}
 
@@ -100,24 +171,31 @@ function Collection({ userRole }) {
       <div className="col-grid">
         {/* ── Left: Shift Tally ── */}
         <div className="col-tally">
-          {/* Batch cards — BatchCard component unchanged */}
-          <BatchCard
-            label="Batch 1 — Morning Shift (6:00 AM – 3:00 PM)"
-            stats={batchStats?.batch1}
-            batchKey="Batch 1"
-            onVerify={handleVerifyBatchWithConfirm}
-            verifyingBatch={verifyingBatch}
-            isVerifiable={isBatchVerifiable("Batch 1")}
-          />
-          <BatchCard
-            label="Batch 2 — Afternoon Shift (3:00 PM – 9:00 PM)"
-            stats={batchStats?.batch2}
-            batchKey="Batch 2"
-            onVerify={handleVerifyBatchWithConfirm}
-            verifyingBatch={verifyingBatch}
-            isVerifiable={isBatchVerifiable("Batch 2")}
-          />
-          {["ADMIN", "SUPERVISOR"].includes(userRole) && (
+          {batchKeys.length > 0 ? (
+            batchKeys.map((key) => {
+              const shift = shifts[key];
+              return (
+                <BatchCard
+                  key={key}
+                  label={`${shift.name} — ${shift.label}`}
+                  stats={batchStats?.[key]}
+                  batchKey={shift.name}
+                  onVerify={handleVerifyBatchWithConfirm}
+                  verifyingBatch={verifyingBatch}
+                  isVerifiable={
+                    userRole !== "MANAGER" && isBatchVerifiable(shift.name)
+                  }
+                />
+              );
+            })
+          ) : (
+            <div className="col-shift-loading">
+              {shiftsLoading
+                ? "Loading schedule..."
+                : "No shift configuration found."}
+            </div>
+          )}
+          {userRole === "ADMIN" && (
             <button
               type="button"
               className="col-override-btn"
@@ -216,7 +294,7 @@ function Collection({ userRole }) {
                 ) : (
                   currentTickets.map((ticket) => {
                     const effectiveBatch =
-                      OperationsService.getEffectiveBatchName(ticket);
+                      OperationsService.getEffectiveBatchName(ticket, shifts);
                     return (
                       <tr
                         key={ticket.id}
@@ -411,7 +489,10 @@ function Collection({ userRole }) {
                     ) : (
                       unverifiedTickets.map((ticket) => {
                         const effectiveBatch =
-                          OperationsService.getEffectiveBatchName(ticket);
+                          OperationsService.getEffectiveBatchName(
+                            ticket,
+                            shifts,
+                          );
                         return (
                           <tr key={ticket.id} className="col-table-row">
                             <td>
@@ -460,6 +541,98 @@ function Collection({ userRole }) {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isScheduleModalOpen && (
+        <div
+          className="col-overlay"
+          onClick={() => setIsScheduleModalOpen(false)}
+        >
+          <div className="col-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="col-modal-header">
+              <div>
+                <h2 className="col-modal-title">Edit Batch Schedule</h2>
+                <p className="col-modal-subtitle">
+                  Update the batch times and save the configuration.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="col-modal-close"
+                onClick={() => setIsScheduleModalOpen(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="col-modal-body">
+              <div className="col-table-wrap">
+                <table className="col-table">
+                  <thead>
+                    <tr>
+                      {["Batch", "Start Hour", "End Hour"].map((h) => (
+                        <th key={h}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(editingShifts).map(([key, shift]) => (
+                      <tr key={key} className="col-table-row">
+                        <td>{shift.name}</td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            max="23"
+                            value={shift.startHour}
+                            onChange={(e) =>
+                              handleScheduleFieldChange(
+                                key,
+                                "startHour",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            max="23"
+                            value={shift.endHour}
+                            onChange={(e) =>
+                              handleScheduleFieldChange(
+                                key,
+                                "endHour",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="col-modal-footer">
+              <button
+                type="button"
+                className="col-action-btn"
+                onClick={() => setIsScheduleModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="bc-verify-btn"
+                onClick={handleSaveSchedule}
+              >
+                Save Schedule
+              </button>
             </div>
           </div>
         </div>

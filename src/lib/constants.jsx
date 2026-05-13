@@ -12,9 +12,3 @@ export const SHIFTS = {
     endHour: 21,
   },
 };
-
-export const STORAGE_KEYS = {
-  TICKETS: "tanqui_tickets",
-  VEHICLES: "tanqui_vehicles",
-  DRIVERS: "tanqui_drivers",
-};

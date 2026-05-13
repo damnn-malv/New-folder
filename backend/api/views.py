@@ -389,3 +389,27 @@ def server_time(request):
     """Return current server time in ISO format"""
     now = timezone.now()
     return Response({'time': now.isoformat()})
+
+
+@api_view(['GET', 'PUT'])
+def schedules_view(request):
+    import json
+    import os
+    file_path = os.path.join(os.path.dirname(__file__), '..', 'schedules.json')
+    if request.method == 'GET':
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            return Response(data)
+        except FileNotFoundError:
+            return Response({'error': 'Schedules file not found'}, status=404)
+        except json.JSONDecodeError:
+            return Response({'error': 'Invalid JSON'}, status=500)
+    elif request.method == 'PUT':
+        try:
+            data = request.data
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=2)
+            return Response({'status': 'updated'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
