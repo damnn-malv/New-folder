@@ -193,9 +193,7 @@ function Collection({ userRole }) {
                   batchKey={shift.name}
                   onVerify={handleVerifyBatchWithConfirm}
                   verifyingBatch={verifyingBatch}
-                  isVerifiable={
-                    userRole !== "MANAGER" && isBatchVerifiable(shift.name)
-                  }
+                 
                 />
               );
             })
