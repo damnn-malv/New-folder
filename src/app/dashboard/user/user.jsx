@@ -202,7 +202,6 @@ function User() {
             <thead>
               <tr>
                 {[
-                  "ID",
                   "Full Name",
                   "Email Address",
                   "Role",
@@ -246,9 +245,6 @@ function User() {
               ) : (
                 users.map((user) => (
                   <tr key={user.id} className="usr-row">
-                    <td>
-                      <span className="usr-id-badge">#{user.id}</span>
-                    </td>
                     <td className="usr-td-name">
                       {user.first_name} {user.last_name}
                     </td>
