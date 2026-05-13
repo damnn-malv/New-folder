@@ -1,0 +1,10 @@
+{
+  "BATCH_1": {
+    "startHour": 6,
+    "endHour": 15
+  },
+  "BATCH_2": {
+    "startHour": 15,
+    "endHour": 22
+  }
+}
