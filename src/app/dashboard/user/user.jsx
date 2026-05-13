@@ -201,8 +201,7 @@ function User() {
           <table className="usr-table">
             <thead>
               <tr>
-                {[
-                 
+                {[                
                   "Full Name",
                   "Email Address",
                   "Role",
