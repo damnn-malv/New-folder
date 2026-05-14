@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { OperationsService } from "../operations-service";
 import { apiService } from "../api-service";
 
-export function useCollection(shifts) {
+export function useCollection(shifts, userRole) {
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -57,18 +57,11 @@ export function useCollection(shifts) {
 
   const isBatchVerifiable = (batchKey) => {
     const now = new Date();
-    const hour = now.getHours();
     const normalizedKey = batchKey.toLowerCase().replace(/\s+/g, "");
     const verifiedDate = verifiedBatches[normalizedKey];
     const today = getTodayDateString(now);
 
-    if (verifiedDate === today) return false; // Already verified today
-
-    const shift = getShiftByName(batchKey);
-    if (shift) {
-      return hour >= shift.endHour;
-    }
-    return false;
+    return verifiedDate !== today;
   };
 
   useEffect(() => {
@@ -125,8 +118,7 @@ export function useCollection(shifts) {
           isTodayTicket(t) &&
           !t.is_verified &&
           t.status !== "CANCELLED" &&
-          t.vehicle?.status !== "QUEUED" &&
-          OperationsService.getEffectiveBatchName(t, shifts) === batchName,
+          t.vehicle?.status !== "QUEUED",
       );
 
       if (batchTickets.length === 0) {
@@ -230,7 +222,7 @@ export const BatchCard = ({
   batchKey,
   onVerify,
   verifyingBatch,
-  isVerifiable,
+  userRole,
 }) => (
   <div className="bc-card">
     <div className="bc-header">
@@ -267,7 +259,7 @@ export const BatchCard = ({
         type="button"
         className="bc-verify-btn"
         onClick={() => onVerify(batchKey)}
-        disabled={!isVerifiable}
+        disabled={userRole === "MANAGER"}
       >
         {verifyingBatch === batchKey ? (
           <>

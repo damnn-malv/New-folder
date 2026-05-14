@@ -273,22 +273,30 @@ def transaction_logs(request):
 
 @api_view(['GET'])
 def dashboard_stats(request):
+    # Start of today in UTC
     now_ph = timezone.now() + timedelta(hours=8)
-    today_utc_start = timezone.make_aware(datetime(now_ph.year, now_ph.month, now_ph.day, 0, 0, 0) - timedelta(hours=8))
+    today_start = timezone.make_aware(
+        datetime(now_ph.year, now_ph.month, now_ph.day, 0, 0, 0) - timedelta(hours=8)
+    )
 
-    all_collected = Ticket.objects.filter(status='COLLECTED')
-    today_collected = list(all_collected.filter(issued_at__gte=today_utc_start))
+    # ✅ All tickets that have a dispatched_at timestamp today
+    today_dispatched = Ticket.objects.filter(
+        dispatched_at__isnull=False,
+        dispatched_at__gte=today_start
+    )
 
-    batch1_today = [t for t in today_collected if get_batch(t) == 'Batch 1']
-    batch2_today = [t for t in today_collected if get_batch(t) == 'Batch 2']
+    # Split into batches
+    batch1_today = [t for t in today_dispatched if get_batch(t) == 'Batch 1']
+    batch2_today = [t for t in today_dispatched if get_batch(t) == 'Batch 2']
 
     return Response({
         'batch1_today': summarize(batch1_today),
         'batch2_today': summarize(batch2_today),
-        'today_total': summarize(today_collected),
+        'today_total': summarize(today_dispatched),
         'total_tickets': Ticket.objects.count(),
-        'total_collected': all_collected.count(),
-        'total_revenue': round(float(all_collected.aggregate(s=Sum('collection_amount'))['s'] or 0), 2),
+        'total_dispatched': Ticket.objects.filter(dispatched_at__isnull=False).count(),
+        'total_revenue': round(float(today_dispatched.aggregate(
+            s=Sum('collection_amount'))['s'] or 0), 2),
         'active_vehicles': Vehicle.objects.filter(is_archived=False).count(),
         'active_drivers': Driver.objects.filter(is_archived=False).count(),
     })
