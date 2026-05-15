@@ -115,9 +115,12 @@ def filter_collected(start_date=None, end_date=None):
     return qs
 
 
-def summarize(ticket_list):
+def summarize(ticket_list, fallback_amount=0.0):
     count = len(ticket_list)
-    total = round(sum(float(t.collection_amount or 0) for t in ticket_list), 2)
+    total = round(sum(
+        float(t.collection_amount) if (t.collection_amount is not None and float(t.collection_amount) > 0) else fallback_amount
+        for t in ticket_list
+    ), 2)
     return {'count': count, 'total': total}
 
 @api_view(['POST'])
@@ -184,11 +187,17 @@ def report_summary(request):
     batch2 = [t for t in tickets if get_batch(t) == 'Batch 2']
     today = [t for t in tickets if today_utc_start <= t.issued_at <= today_utc_end]
 
+    latest_price = TicketPrice.objects.order_by('-effective_date').first()
+    fallback_amount = float(latest_price.amount) if latest_price else 0.0
+
     return Response({
-        'batch1': summarize(batch1),
-        'batch2': summarize(batch2),
-        'today': summarize(today),
-        'grand_total': round(sum(float(t.collection_amount or 0) for t in tickets), 2),
+        'batch1': summarize(batch1, fallback_amount),
+        'batch2': summarize(batch2, fallback_amount),
+        'today': summarize(today, fallback_amount),
+        'grand_total': round(sum(
+            float(t.collection_amount) if (t.collection_amount is not None and float(t.collection_amount) > 0) else fallback_amount
+            for t in tickets
+        ), 2),
         'total_tickets': len(tickets),
     })
 
@@ -225,19 +234,25 @@ def report_daily_chart(request):
 
     tickets = filter_collected(start_date, end_date)
 
+    # Fallback price: used when a ticket's collection_amount is null
+    latest_price = TicketPrice.objects.order_by('-effective_date').first()
+    fallback_amount = float(latest_price.amount) if latest_price else 0.0
+
     daily = {}
     for t in tickets:
         local_dt = t.issued_at + timedelta(hours=8)
         day_key = local_dt.strftime('%Y-%m-%d')
         batch = get_batch(t)
+        # Use ticket's own amount; fall back to current price if null
+        amount = float(t.collection_amount) if (t.collection_amount is not None and float(t.collection_amount) > 0) else fallback_amount
         if day_key not in daily:
             daily[day_key] = {'date': day_key, 'batch1_count': 0, 'batch1_total': 0.0, 'batch2_count': 0, 'batch2_total': 0.0}
         if batch == 'Batch 1':
             daily[day_key]['batch1_count'] += 1
-            daily[day_key]['batch1_total'] += float(t.collection_amount or 0)
+            daily[day_key]['batch1_total'] = round(daily[day_key]['batch1_total'] + amount, 2)
         else:
             daily[day_key]['batch2_count'] += 1
-            daily[day_key]['batch2_total'] += float(t.collection_amount or 0)
+            daily[day_key]['batch2_total'] = round(daily[day_key]['batch2_total'] + amount, 2)
 
     return Response({'chart_data': sorted(daily.values(), key=lambda x: x['date'])})
 
@@ -285,14 +300,18 @@ def dashboard_stats(request):
         dispatched_at__gte=today_start
     )
 
+    # Fallback price for tickets with null collection_amount
+    latest_price = TicketPrice.objects.order_by('-effective_date').first()
+    fallback_amount = float(latest_price.amount) if latest_price else 0.0
+
     # Split into batches
     batch1_today = [t for t in today_dispatched if get_batch(t) == 'Batch 1']
     batch2_today = [t for t in today_dispatched if get_batch(t) == 'Batch 2']
 
     return Response({
-        'batch1_today': summarize(batch1_today),
-        'batch2_today': summarize(batch2_today),
-        'today_total': summarize(today_dispatched),
+        'batch1_today': summarize(batch1_today, fallback_amount),
+        'batch2_today': summarize(batch2_today, fallback_amount),
+        'today_total': summarize(today_dispatched, fallback_amount),
         'total_tickets': Ticket.objects.count(),
         'total_dispatched': Ticket.objects.filter(dispatched_at__isnull=False).count(),
         'total_revenue': round(float(today_dispatched.aggregate(
